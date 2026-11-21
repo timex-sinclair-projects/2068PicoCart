@@ -27,19 +27,19 @@ GPIO = {
     **{16 + i: (f"MD{i}", BI) for i in range(8)},
     24: ("ROSCS_n", IN), 25: ("MREQ_n", IN), 26: ("RD_n", IN), 27: ("WR_n", IN),
     28: ("IORQ_n", IN), 29: ("M1_n", IN), 30: ("RFSH_n", IN), 31: ("EXROM", IN),
-    32: ("BUS_OFF", IN), 33: ("BE_GPIO", BI), 34: ("I2C_SDA", BI), 35: ("I2C_SCL", OUT), 37: ("A7R", IN),
+    32: ("BUS_OFF", IN), 33: ("BE_GPIO", BI), 37: ("A7R", IN),
     40: ("DOCK_SENSE", IN), 41: ("VBUS_SENSE", IN),
     # 3.3 V-only controls on the top-left pins, under the buttons and LEDs (pins 54-56)
     43: ("LED2", OUT), 44: ("LED", OUT), 45: ("MENU_n", IN),
 }
 LOCAL = {46: "UART_TX", 47: "UART_RX"}
-SPARE = [36, 38, 39, 42]          # 38/39 (pins 47/48) sit under the DOCK_SENSE pre-route: keep them spare
+SPARE = [34, 35, 36, 38, 39, 42]  # 34/35 were I2C for an OLED (dropped: the dock hides it); 38/39 (pins 47/48) sit under the DOCK_SENSE pre-route: keep them spare
 
 
 def main():
     s = Sheet("picocart.kicad_sch", "mcu.kicad_sch", "2068 PicoCart: RP2354B Core")
     s.text("RP2354B core per 'Hardware design with RP2350' (as tspico-hardware v3). GPIO map: ../SCHEMATIC.md sheet 3.", 20, 280, 2.2)
-    s.text("GPIO40-47 are NOT 5 V tolerant: only the ADC sense dividers (<= 3.0 V) use them. GPIO43-45 drive only the LEDs/MENU (3.3 V). Spare: GPIO36, 38, 39, 42. GPIO34/35 = I2C1 SDA/SCL for the optional display.", 20, 285, 2.0)
+    s.text("GPIO40-47 are NOT 5 V tolerant: only the ADC sense dividers (<= 3.0 V) use them. GPIO43-45 drive only the LEDs/MENU (3.3 V). Spare: GPIO34, 35, 36, 38, 39, 42.", 20, 285, 2.0)
     s.power("+3V3", 300, 30, "#PWR03", flag=False)
     s.power("GND", 330, 40, "#PWR04", flag=False)
 

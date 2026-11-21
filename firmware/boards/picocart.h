@@ -27,17 +27,6 @@ pico_board_cmake_set(PICO_PLATFORM, rp2350)
 #define PICO_DEFAULT_LED_PIN 44
 #endif
 
-// --- I2C: optional OLED on J3, I2C1 SDA GPIO34 / SCL GPIO35 ---
-#ifndef PICO_DEFAULT_I2C
-#define PICO_DEFAULT_I2C 1
-#endif
-#ifndef PICO_DEFAULT_I2C_SDA_PIN
-#define PICO_DEFAULT_I2C_SDA_PIN 34
-#endif
-#ifndef PICO_DEFAULT_I2C_SCL_PIN
-#define PICO_DEFAULT_I2C_SCL_PIN 35
-#endif
-
 // --- FLASH: 2 MB in package ---
 #define PICO_BOOT_STAGE2_CHOOSE_W25Q080 1
 #ifndef PICO_FLASH_SPI_CLKDIV

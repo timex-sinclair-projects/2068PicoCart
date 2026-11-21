@@ -15,7 +15,6 @@ A dock cartridge for the Timex Sinclair 2068, built around a Raspberry Pi RP2354
 - **No USB needed in the 2068.** The cart runs on the 2068's own +5 V. USB is only for copying carts onto it, and the cart can be powered by USB alone for that.
 - **Safe on the bus.** The 74LVC245 data buffer stays off until the cart sees the 2068's +5 V hold steady.
 - **USB serial.** Status and debug output come over the same USB-C cable. `picotool load -f` can reflash the cart without pressing BOOTSEL.
-- **Optional display.** There are holes for a 0.91 in 128×32 SSD1306 I2C OLED (J3, not fitted at the factory).
 
 ## Hardware
 
@@ -34,7 +33,6 @@ A dock cartridge for the Timex Sinclair 2068, built around a Raspberry Pi RP2354
 | 24–31 | ROSCS, MREQ, RD, WR, IORQ, M1, RFSH, EXROM |
 | 32 | BUS_OFF (high = buffer off) |
 | 33 | BE (via the R10 link, not fitted) |
-| 34 / 35 | I2C1 SDA / SCL (OLED) |
 | 37 | A7R |
 | 40 / 41 | DOCK +5 V and VBUS sense (ADC, 10k/15k dividers) |
 | 43 / 44 | White / red LED |
@@ -45,7 +43,7 @@ A dock cartridge for the Timex Sinclair 2068, built around a Raspberry Pi RP2354
 
 Two programs are in [`firmware/`](firmware). Both use the board header in [`firmware/boards`](firmware/boards):
 
-- [`bringup`](firmware/bringup) checks a new board. It holds the bus buffer off, then reports the +5 V rails, activity on the bus lines, the MD float test and an I2C scan over USB serial.
+- [`bringup`](firmware/bringup) checks a new board. It holds the bus buffer off, then reports the +5 V rails, activity on the bus lines, and the MD float test over USB serial.
 - [`romemu`](firmware/romemu) is the cartridge firmware. The cart menu is Z80 code in [`romemu/menu`](firmware/romemu/menu). The build reassembles it with [sjasmplus](https://github.com/z00m128/sjasmplus) when that's installed, and otherwise uses the committed `menu.bin`.
 
 ### How the menu works
@@ -109,10 +107,7 @@ From the 2068's power alone, the cart's firmware is running 0.1 ms after power r
 
 ## Status
 
-Rev 0.1 boards have been built and brought up. These carts run from the cart's ROM: AROS BASIC carts (Hello world, and Profile 2068's 16K at $8000–$BFFF), 32K machine-code carts (73000 Flight Simulator), and LROS carts that replace the HOME ROM (Space Raiders, 16K at $0000–$3FFF). RAM in the dock bank works: [`firmware/tests/ramtest.py`](firmware/tests/ramtest.py) builds a test cart that writes and checks two patterns across 8 KB of cart RAM at $C000. It passes, and the cart counted exactly 16,384 dock writes. Loading from the USB drive works. The cart runs on the 2068's power alone, with no USB. The on-screen cart menu works on the 2068: choosing a cart restarts the 2068 into it, and the "no cartridge" entry starts BASIC with the cart off the bus. Pressing MENU while a cart runs brings up the menu at the next power-up, with or without USB power in between, and a second press cancels it.
-
-Not tested yet:
-- the OLED
+Rev 0.1 boards have been built and brought up. These carts run from the cart's ROM: AROS BASIC carts (Hello world, and Profile 2068's 16K at $8000–$BFFF), 32K machine-code carts (73000 Flight Simulator), and LROS carts that replace the HOME ROM (Space Raiders, 16K at $0000–$3FFF). RAM in the dock bank works: [`firmware/tests/ramtest.py`](firmware/tests/ramtest.py) builds a test cart that writes and checks two patterns across 8 KB of cart RAM at $C000. It passes, and the cart counted exactly 16,384 dock writes. Loading from the USB drive works. The cart runs on the 2068's power alone, with no USB. The on-screen cart menu works on the 2068: choosing a cart restarts the 2068 into it, and the "no cartridge" entry starts BASIC with the cart off the bus. Pressing MENU while a cart runs brings up the menu at the next power-up, with or without USB power in between, and a second press cancels it. Every feature has now been tested on hardware.
 
 ## License
 

@@ -164,8 +164,8 @@ U1 = RP2354B. Physical pin numbers will come from the RP2350 datasheet pin table
 | 31 | 39 | `EXROM` | in | J1, 5 V input (FT pin) |
 | 32 | 40 | `BUS_OFF` | out | R1 10 kΩ pull-up to 3V3 |
 | 33 | 42 | `BE_GPIO` | — | R10 0 Ω **DNP** to J1.33 (FT pin) |
-| 34 | 43 | `I2C_SDA` | bidir | J3 pin 4 (optional OLED, I2C1 SDA) |
-| 35 | 44 | `I2C_SCL` | out | J3 pin 3 (optional OLED, I2C1 SCL) |
+| 34 | 43 | — | — | spare (was I2C SDA for an OLED, dropped: the dock covers that part of the board) |
+| 35 | 44 | — | — | spare (was I2C SCL) |
 | 36 | 45 | — | — | spare |
 | 37 | 46 | `A7R` | in | J1.20, 5 V input (FT pin) |
 | 38 | 47 | — | — | spare (under the DOCK_SENSE pre-route) |
@@ -284,8 +284,7 @@ Notes:
 | TP6, TP7 | `UART_TX`, `UART_RX` | |
 | SW2 | BOOTSEL button (XKB TS-1187A-C-J-B, 5 mm stem, beside SW1) | Pulls QSPI_SS low through R14 1 kΩ. Hold while plugging in USB to enter the ROM bootloader |
 | D4, R15 | second LED, white 0603 (C2290, basic) | `LED2` (GPIO43) → R15 3.3 kΩ (C22978, basic) → D4. Rev 0.1 boards have 100 Ω, which is far too bright; the firmware dims D4 to 3% with PWM for them |
-| J3 | optional 128x32 I2C OLED, 4 holes at 2.54 mm: GND, 3V3, SCL, SDA | Not assembled; the module carries the pull-ups. A case variant is needed if fitted |
-| — | spare GPIO 36, 38, 39, 42 | unconnected |
+| — | spare GPIO 34, 35, 36, 38, 39, 42 | unconnected |
 
 ## Bill of materials (JLC, stock checked 2026-11-12)
 

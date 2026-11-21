@@ -10,19 +10,17 @@
 //     (all zero with the 2068 off; thousands with it running)
 //   - an MD0-MD7 float test: with the buffer off, the pull-ups and pull-downs must win
 // D3 (red) and D4 (white) blink alternately; holding MENU lights both.
-// At start and every 10 s it scans I2C1 (GPIO34/35) for the optional OLED (0x3C/0x3D).
 
 #include <stdio.h>
 #include "pico/stdlib.h"
 #include "hardware/adc.h"
 #include "hardware/clocks.h"
 #include "hardware/gpio.h"
-#include "hardware/i2c.h"
 
 enum {
     PIN_MD0 = 16, PIN_ROSCS = 24, PIN_MREQ = 25, PIN_RD = 26, PIN_WR = 27, PIN_IORQ = 28,
     PIN_M1 = 29, PIN_RFSH = 30, PIN_EXROM = 31, PIN_BUS_OFF = 32, PIN_BE = 33,
-    PIN_SDA = 34, PIN_SCL = 35, PIN_A7R = 37, PIN_DOCK_SENSE = 40, PIN_VBUS_SENSE = 41,
+    PIN_A7R = 37, PIN_DOCK_SENSE = 40, PIN_VBUS_SENSE = 41,
     PIN_LED2 = 43, PIN_LED = 44, PIN_MENU = 45,
 };
 
@@ -46,18 +44,6 @@ static void input_pin(int pin) {
     gpio_disable_pulls(pin);                          // dock pins: no pulls (RP2350-E9)
 }
 
-static void i2c_scan(void) {
-    printf("I2C1 scan (GPIO34 SDA / GPIO35 SCL):");
-    int found = 0;
-    for (int addr = 0x08; addr < 0x78; addr++) {
-        uint8_t b;
-        if (i2c_read_timeout_us(i2c1, addr, &b, 1, false, 2000) >= 0) {
-            printf(" 0x%02x%s", addr, (addr == 0x3c || addr == 0x3d) ? " (OLED)" : "");
-            found++;
-        }
-    }
-    printf("%s\n", found ? "" : " nothing (no display fitted?)");
-}
 
 // MD0-7 float test: returns the byte read with pull-downs and with pull-ups.
 static void md_float(uint8_t *lo, uint8_t *hi) {
@@ -88,10 +74,6 @@ int main(void) {
     adc_init();
     adc_gpio_init(PIN_DOCK_SENSE);                    // ADC0
     adc_gpio_init(PIN_VBUS_SENSE);                    // ADC1
-
-    i2c_init(i2c1, 100 * 1000);
-    gpio_set_function(PIN_SDA, GPIO_FUNC_I2C); gpio_pull_up(PIN_SDA);
-    gpio_set_function(PIN_SCL, GPIO_FUNC_I2C); gpio_pull_up(PIN_SCL);
 
     stdio_init_all();
     for (int i = 0; i < 30 && !stdio_usb_connected(); i++) sleep_ms(100);
@@ -129,7 +111,6 @@ int main(void) {
         printf("  addr %lu  (levels %08lx, %lu samples)\n", (unsigned long)addr_changes,
                (unsigned long)(prev & 0xffffffff), (unsigned long)samples);
 
-        if (tick % 10 == 0) i2c_scan();
         tick++;
         sleep_ms(900);
     }

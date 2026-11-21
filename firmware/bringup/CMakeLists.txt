@@ -10,7 +10,7 @@ set(CMAKE_C_STANDARD 11)
 pico_sdk_init()
 
 add_executable(bringup main.c)
-target_link_libraries(bringup pico_stdlib hardware_adc hardware_i2c)
+target_link_libraries(bringup pico_stdlib hardware_adc)
 pico_enable_stdio_usb(bringup 1)
 pico_enable_stdio_uart(bringup 0)
 pico_add_extra_outputs(bringup)

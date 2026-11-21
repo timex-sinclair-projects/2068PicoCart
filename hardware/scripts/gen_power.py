@@ -7,7 +7,6 @@
   J2     USB-C C5178539 (HRO TYPE-C-31-M-12 land pattern), R6/R7 5k1 Rd, U5 USBLC6-2SC6,
          R8/R9 33R series (as tspico v3: JLC basic; Raspberry Pi suggests 27R)
   SW1    MENU, D3/R11 and D4/R15 status LEDs
-  J3     optional 128x32 I2C OLED (SSD1306 module), 4 holes GND/3V3/SCL/SDA, not assembled
 """
 import os
 import sys
@@ -92,13 +91,8 @@ def main():
     s.glabel("LED2", R15.pin("1"), IN); s.label("LED2_A", R15.pin("2"))
     D4 = s.place("Device:LED", "D4", "white", "LED_SMD:LED_0603_1608Metric", 90, 260)
     s.label("GND", D4.pin("1")); s.label("LED2_A", D4.pin("2"))
-    s.text("SW1 MENU (internal pull-up on GPIO45): hold at power-on for the menu. D3 red LED on GPIO44, D4 white LED on GPIO43 (100R: Vf 2.6-3.1 V).", 30, 270, 1.5)
+    s.text("SW1 MENU (internal pull-up on GPIO45): hold at power-on for the menu. D3 red LED on GPIO44, D4 white LED on GPIO43 (R15 3k3: a white LED is far brighter than the red one at the same current).", 30, 270, 1.5)
 
-    # ---- optional I2C display -------------------------------------------------------------
-    J3 = s.place("Connector_Generic:Conn_01x04", "J3", "OLED_I2C", "Connector_PinHeader_2.54mm:PinHeader_1x04_P2.54mm_Vertical", 160, 230, dnp=True)
-    s.label("GND", J3.pin("1")); s.label("+3V3", J3.pin("2"))
-    s.glabel("I2C_SCL", J3.pin("3"), IN); s.glabel("I2C_SDA", J3.pin("4"), BI)
-    s.text("J3: optional 0.91 in 128x32 SSD1306 I2C OLED module (GND, VCC, SCL, SDA), fitted by hand. The module carries the I2C pull-ups. GPIO34 SDA / GPIO35 SCL (I2C1).", 130, 250, 1.5)
 
     s.write()
     print("wrote power.kicad_sch")

@@ -70,7 +70,7 @@ P["R8"], P["R9"] = (33.7, 10.2, 0), (33.7, 12.0, 0)           # 33R series D+/D-
 P["C12"] = (35.6, 15.4, 90)
 
 # controls, top left: MENU and BOOTSEL (5 mm stems) side by side along the handle edge, the two
-# LEDs in a column to their right; all of it above the optional OLED (module top edge ~y 8.3)
+# LEDs in a column to their right
 P["SW1"], P["SW2"] = (7.5, 4.0, 90), (13.3, 4.0, 90)
 P["D3"], P["D4"] = (17.0, 2.4, 90), (17.0, 5.6, 90)
 P["R11"], P["R15"] = (14.2, 9.4, 0), (17.2, 9.4, 0)
@@ -78,10 +78,6 @@ P["R11"], P["R15"] = (14.2, 9.4, 0), (17.2, 9.4, 0)
 # test pads, top right: SWCLK SWDIO RUN 3V3 GND TX RX
 for i, r in enumerate(["TP1", "TP2", "TP3", "TP4", "TP5", "TP6", "TP7"]):
     P[r] = (36.0 + 2.0 * i, 2.2, 0)
-# optional I2C OLED header (not assembled): a column by the right edge, pin 4 (SDA) at the top,
-# so a 0.91 in 38 x 12 mm module lies across the board (x ~10-49, y ~8.3-20.3), clear of the switches
-J3_X, J3_Y4 = 47.62, 10.5
-P["J3"] = (J3_X, J3_Y4 + 3 * 2.54, 180)
 
 # power column, x 35-48.5 between the crystal and the right notch
 P["D2"] = (38.6, 9.4, 0)                    # VBUS -> +5V
@@ -261,13 +257,6 @@ def main():
 
     for name, box in TABS.items():
         no_parts_area(board, name, *box)
-    # J3 pin labels on the bare underside, beside each hole (module order GND VCC SCL SDA, pin 1 at the bottom)
-    for k, t in enumerate(("GND", "3V3", "SCL", "SDA")):
-        tx = pcbnew.PCB_TEXT(board)
-        tx.SetText(t); tx.SetLayer(pcbnew.B_SilkS); tx.SetMirrored(True)
-        tx.SetPosition(mm(J3_X - 2.4, J3_Y4 + 2.54 * (3 - k)))
-        tx.SetTextSize(mm(0.8, 0.8)); tx.SetTextThickness(pcbnew.FromMM(0.12))
-        board.Add(tx)
 
     # dock tongue: no tracks or vias below the finger tips or in the gaps between fingers
     # (the dock contacts wipe that area and the bevel cuts it); entry is from the top of each finger

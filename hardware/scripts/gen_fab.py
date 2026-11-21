@@ -117,7 +117,7 @@ def main():
         f.write(f"- Not in the BOM/CPL (not assembled): J1 (dock edge fingers), TP1-TP7 (test pads), {', '.join(sorted(skipped))}.\n")
         f.write("- BOM lines with no LCSC number (pick at upload): " + ("; ".join(f"{c} ({r})" for c, r in missing) or "none") + ".\n")
         f.write("- L1 (Abracon AOTA-B201610S3R3-101-T, the RP2350 core-regulator inductor) is polarised. The footprint copies LCSC's land pattern and pad numbering, so no rotation offset should be needed, but check the preview: the dot on L1 must be on pad 2 (net DVDD, marked by the silkscreen dot), the end toward the dock fingers. Check its stock at upload: it ran out on 2026-10-12. If it is out again, remove it from the BOM and CPL and fit it by hand.\n")
-        f.write("- DNP (footprint only, fitted by hand): R10 (0 R, dock BE to GPIO33); J3 (optional 0.91 in 128x32 SSD1306 I2C OLED module, holes GND/3V3/SCL/SDA; trim the pins flush underneath).\n")
+        f.write("- DNP (footprint only, fitted by hand): R10 (0 R, dock BE to GPIO33).\n")
         f.write("- All drills are 0.3 mm or larger; all vias 0.6/0.3 mm.\n")
         f.write("- Check rotations in JLCPCB's placement preview: JLC's part orientation differs from KiCad's for many footprints (QFN, SOT-223, SOIC, connectors); fix there, not here.\n")
         f.write("- Upload order: PCB first (4 layers, 1.6 mm, ENIG or hard gold for the dock fingers, 30-45 degree finger bevel), then assembly with the BOM and CPL.\n")

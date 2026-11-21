@@ -10,7 +10,6 @@
 "white","D4","LED_SMD:LED_0603_1608Metric","KT-0603W","C2290","1","JLCPCB"
 "TS2068_Cart36","J1","picocart:TS2068_Cart36","","","1","none (board feature)"
 "USB-C","J2","Connector_USB:USB_C_Receptacle_HRO_TYPE-C-31-M-12","HX TYPE-C 16PIN","C5178539","1","JLCPCB"
-"OLED_I2C","J3","Connector_PinHeader_2.54mm:PinHeader_1x04_P2.54mm_Vertical","","","1","hand (DNP)"
 "3.3uH","L1","picocart:L_Abracon_AOTA-B201610","AOTA-B201610S3R3-101-T","C42411119","1","JLCPCB"
 "10k","R1,R2,R4","Resistor_SMD:R_0603_1608Metric","0603WAF1002T5E","C25804","3","JLCPCB"
 "15k","R3,R5","Resistor_SMD:R_0603_1608Metric","0603WAF1502T5E","C22809","2","JLCPCB"
