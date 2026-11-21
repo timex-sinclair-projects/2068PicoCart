@@ -11,7 +11,8 @@ A dock cartridge for the Timex Sinclair 2068, built around a Raspberry Pi RP2354
 - **Thumb-drive loading.** Over USB the cart appears as a 1.4 MB drive called `PICOCART`. Copy a cart onto it, then switch the 2068 off and on. The cart serves the file you copied most recently and remembers it across power cycles.
 - **AROS and LROS images.** Supports `.dck` files (the EightyOne/Warajevo dock format, including RAM chunks) and raw `.bin`/`.rom` images. A raw image loads at $8000 unless its name gives an address, for example `GAME@0000.BIN`.
 - **Full-speed bus emulation.** One RP2350 core does nothing but serve the bus. It runs from SRAM with interrupts off and handles about 650,000 dock reads per second in the 2068.
-- **On-screen cart menu.** Hold **MENU** while switching the 2068 on, and it shows a list of the carts on the drive. Pick one with the cursor keys (or Q/A) and ENTER, and the 2068 restarts into that cart, with no power cycle. Pressing MENU while the 2068 runs brings the menu up at the next power-up instead. The first entry starts the 2068 in BASIC with the cart off the bus.
+- **On-screen cart menu.** Hold **MENU** while switching the 2068 on, and it shows a list of the carts on the drive. Pick one with the cursor keys (or Q/A) and ENTER, and the 2068 restarts into that cart, with no power cycle. Pressing MENU while the 2068 runs brings the menu up at the next power-up instead, even with no USB power in between. The first entry starts the 2068 in BASIC with the cart off the bus.
+- **No USB needed in the 2068.** The cart runs on the 2068's own +5 V. USB is only for copying carts onto it, and the cart can be powered by USB alone for that.
 - **Safe on the bus.** The 74LVC245 data buffer stays off until the cart sees the 2068's +5 V hold steady.
 - **USB serial.** Status and debug output come over the same USB-C cable. `picotool load -f` can reflash the cart without pressing BOOTSEL.
 - **Optional display.** There are holes for a 0.91 in 128×32 SSD1306 I2C OLED (J3, not fitted at the factory).
@@ -76,7 +77,7 @@ cmake -S firmware/romemu -B firmware/romemu/build -DROM_IMAGE="path/to/cart.dck"
 |---|---|
 | 0x000000 | Firmware (up to 512 KB) |
 | 0x080000 | `PICOCART` drive: FAT12, 1.4 MB |
-| 0x1FF000 | Name of the remembered cart |
+| 0x1FE000 | Settings log, two 4 KB sectors: the current cart, and whether the menu comes up at the next power-up |
 
 On first boot the firmware formats the drive and puts a `README.TXT` on it. If the drive gets corrupted, reformat it from your computer as FAT.
 
@@ -88,11 +89,21 @@ On first boot the firmware formats the drive and puts a `README.TXT` on it. If t
 
 If the 2068 is running when you copy, the cart keeps serving the old cart until the 2068 is switched off. Both LEDs blink together while a new cart is waiting.
 
-To switch between carts already on the drive, hold MENU while switching the 2068 on and pick one from the list. The cart you pick stays the current cart until you pick or copy another. The cart can be powered by the 2068, by USB, or by both at once.
+To switch between carts already on the drive, hold MENU while switching the 2068 on and pick one from the list. The cart you pick stays the current cart until you pick or copy another.
+
+### Without USB
+
+The cart doesn't need USB in the 2068. It runs on the 2068's +5 V and remembers everything in flash: the carts on the drive, the current cart, and a MENU press made while the 2068 was on. So you can fill the drive once and leave the cable at your computer:
+
+1. Plug the cart into your computer on its own, with no 2068. USB powers it, and the `PICOCART` drive appears.
+2. Copy carts onto it, eject the drive and unplug the cable.
+3. Put the cart in the 2068 and switch it on. Choose carts with the menu.
+
+From the 2068's power alone, the cart's firmware is running 0.1 ms after power reaches it, and the cart serves the bus about 1.8 s before the 2068 first reads the dock. You can plug USB in while the 2068 is on, for example to watch the serial status; the cart keeps running.
 
 ## Status
 
-Rev 0.1 boards have been built and brought up. These carts run from the cart's ROM: AROS BASIC carts (Hello world, and Profile 2068's 16K at $8000–$BFFF), 32K machine-code carts (73000 Flight Simulator), and LROS carts that replace the HOME ROM (Space Raiders, 16K at $0000–$3FFF). RAM in the dock bank works: [`firmware/tests/ramtest.py`](firmware/tests/ramtest.py) builds a test cart that writes and checks two patterns across 8 KB of cart RAM at $C000. It passes, and the cart counted exactly 16,384 dock writes. Loading from the USB drive works. The on-screen cart menu works on the 2068: choosing a cart restarts the 2068 into it, and the "no cartridge" entry starts BASIC with the cart off the bus.
+Rev 0.1 boards have been built and brought up. These carts run from the cart's ROM: AROS BASIC carts (Hello world, and Profile 2068's 16K at $8000–$BFFF), 32K machine-code carts (73000 Flight Simulator), and LROS carts that replace the HOME ROM (Space Raiders, 16K at $0000–$3FFF). RAM in the dock bank works: [`firmware/tests/ramtest.py`](firmware/tests/ramtest.py) builds a test cart that writes and checks two patterns across 8 KB of cart RAM at $C000. It passes, and the cart counted exactly 16,384 dock writes. Loading from the USB drive works. The cart runs on the 2068's power alone, with no USB, including a MENU press carried over a power cycle. The on-screen cart menu works on the 2068: choosing a cart restarts the 2068 into it, and the "no cartridge" entry starts BASIC with the cart off the bus.
 
 Not tested yet:
 - pressing MENU while a cart runs, to bring up the menu at the next power-up

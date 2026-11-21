@@ -30,6 +30,7 @@
 #include "hardware/structs/sio.h"
 #include "hardware/sync.h"
 #include "tusb.h"
+#include "config.h"
 #include "flashdisk.h"
 #include "loader.h"
 #include "menu_image.h"
@@ -66,7 +67,7 @@ static cart_image_t staged;                           // a cart copied over USB,
 static cart_image_t menu;                             // the menu, with the directory filled in
 static char menu_names[MENU_MAX][64];
 static int menu_count;
-static bool staged_pending, menu_next;
+static bool staged_pending;
 
 enum serving { SERVE_NONE, SERVE_CART, SERVE_MENU };
 static enum serving serving = SERVE_NONE;
@@ -153,8 +154,8 @@ static void power_up(void) {
         memcpy(&cart, &staged, sizeof cart);
         staged_pending = false;
     }
-    bool want_menu = !gpio_get(PIN_MENU) || menu_next;
-    menu_next = false;
+    bool want_menu = !gpio_get(PIN_MENU) || config_menu_next();
+    config_set_menu_next(false);
     if (want_menu) {
         build_menu();
         install(&menu, SERVE_MENU);
@@ -203,6 +204,7 @@ int main(void) {
     // the cart on the drive, else the built-in image; served once the 2068 is on
     uint32_t t0 = time_us_32();
     flashdisk_init();
+    config_init();
     if (!loader_scan(&cart, true)) {
         memcpy(cart.data, rom_image_flash, sizeof cart.data);
         cart.chunks = ROM_IMAGE_CHUNKS;
@@ -252,8 +254,8 @@ int main(void) {
         menu_low = gpio_get(PIN_MENU) ? 0 : menu_low + 1;
         bool menu_down = menu_low >= 20;
         if (menu_down && !menu_was_down && serving != SERVE_MENU) {
-            menu_next = !menu_next;
-            printf(menu_next ? "MENU: the menu comes up at the next power-up\n" : "MENU: cancelled\n");
+            config_set_menu_next(!config_menu_next());
+            printf(config_menu_next() ? "MENU: the menu comes up at the next power-up\n" : "MENU: cancelled\n");
         }
         if (gpio_get(PIN_MENU)) menu_was_down = false;
         else if (menu_down) menu_was_down = true;
@@ -270,7 +272,7 @@ int main(void) {
         }
 
         uint32_t r = n_reads;
-        bool waiting = staged_pending || menu_next;
+        bool waiting = staged_pending || config_menu_next();
         bool flash = tick & 128;
         gpio_put(PIN_LED, waiting ? flash : bus_on);
         gpio_put(PIN_LED2, waiting ? flash : (r != last_reads && (tick & 64)));

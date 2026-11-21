@@ -4,19 +4,17 @@
 // "._" AppleDouble files), hidden and system files. The cart is the file that appeared or
 // changed most recently. Finder keeps a copied file's original date, so dates alone cannot
 // say which file is new: each scan is compared with the previous one. At boot the cart
-// remembered in the config block wins, else the newest-dated file.
+// remembered in the settings log (config.c) wins, else the newest-dated file.
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "loader.h"
+#include "config.h"
 #include "flashdisk.h"
 #include "ff.h"
-#include "hardware/flash.h"
-#include "hardware/sync.h"
 
 #define MAX_FILES 48
-#define CONFIG_MAGIC 0x43415254u   // "CART"
 
 typedef struct {
     char name[64];
@@ -52,26 +50,6 @@ static const entry_t *newest(const entry_t *list, int n, bool only_new) {
             best = &list[i];
     }
     return best;
-}
-
-// ---- remembered cart name, in its own flash block ----
-
-typedef struct { uint32_t magic; char name[64]; } config_t;
-
-static const config_t *config_flash(void) { return (const config_t *)(XIP_BASE + CONFIG_FLASH_OFFSET); }
-
-static void remember(const char *name) {
-    const config_t *c = config_flash();
-    if (c->magic == CONFIG_MAGIC && strcmp(c->name, name) == 0) return;
-    static uint8_t page[FLASH_PAGE_SIZE];
-    memset(page, 0xff, sizeof page);
-    config_t n = {.magic = CONFIG_MAGIC};
-    strncpy(n.name, name, sizeof n.name - 1);
-    memcpy(page, &n, sizeof n);
-    uint32_t ints = save_and_disable_interrupts();
-    flash_range_erase(CONFIG_FLASH_OFFSET, FLASH_SECTOR_SIZE);
-    flash_range_program(CONFIG_FLASH_OFFSET, page, sizeof page);
-    restore_interrupts(ints);
 }
 
 // ---- parsing ----
@@ -156,9 +134,8 @@ bool loader_scan(cart_image_t *img, bool boot) {
 
     const entry_t *pick = NULL;
     if (boot) {
-        const config_t *c = config_flash();
-        for (int i = 0; i < n_cur && !pick && c->magic == CONFIG_MAGIC; i++)
-            if (strcmp(cur[i].name, c->name) == 0) pick = &cur[i];
+        for (int i = 0; i < n_cur && !pick; i++)
+            if (strcmp(cur[i].name, config_cart()) == 0) pick = &cur[i];
     } else {
         pick = newest(cur, n_cur, true);                          // a file that appeared or changed
         for (int i = 0; i < n_cur && !pick && chosen.name[0]; i++)
@@ -172,7 +149,7 @@ bool loader_scan(cart_image_t *img, bool boot) {
         if (load(&e, img)) {
             chosen = e;
             changed = true;
-            remember(e.name);
+            config_set_cart(e.name);
             printf("drive: cart %s (%lu bytes, chunks %02x, RAM %02x)\n", e.name, (unsigned long)e.size,
                    img->chunks, img->ram);
         } else {
@@ -211,7 +188,7 @@ bool loader_load_name(const char *name, cart_image_t *img) {
         f_mount(NULL, "", 0);
         if (ok) {
             chosen = e;
-            remember(e.name);
+            config_set_cart(e.name);
             printf("menu: cart %s (chunks %02x, RAM %02x)\n", e.name, img->chunks, img->ram);
         }
         return ok;

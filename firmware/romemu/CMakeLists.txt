@@ -34,7 +34,7 @@ add_custom_target(menu_image DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/menu_image.h)
 # FatFs (read side of the cart drive) as bundled with TinyUSB
 set(FATFS_DIR ${PICO_SDK_PATH}/lib/tinyusb/lib/fatfs/source)
 
-add_executable(romemu main.c flashdisk.c loader.c usb_descriptors.c ${FATFS_DIR}/ff.c ${FATFS_DIR}/ffunicode.c)
+add_executable(romemu main.c config.c flashdisk.c loader.c usb_descriptors.c ${FATFS_DIR}/ff.c ${FATFS_DIR}/ffunicode.c)
 add_dependencies(romemu rom_image menu_image)
 target_include_directories(romemu PRIVATE ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_BINARY_DIR} ${FATFS_DIR})
 target_compile_definitions(romemu PRIVATE
