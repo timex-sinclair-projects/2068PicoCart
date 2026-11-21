@@ -1,21 +1,24 @@
-// 2068 PicoCart ROM emulator with USB thumb-drive loading.
+// 2068 PicoCart ROM emulator with USB thumb-drive loading and an on-screen cart menu.
 //
 // Serves a 64 KB DOCK-bank image to the TS2068.
 // Core 1 owns the bus: interrupts off, code and image in SRAM, polling SIO.
 //   ROSCS, MREQ and RD low -> drive image[A0-A15] on MD0-MD7 until RD or ROSCS rises.
-//   ROSCS, MREQ and WR low -> store MD0-MD7 if that chunk is RAM in the image.
+//   ROSCS, MREQ and WR low -> store MD0-MD7 if that chunk is RAM in the image; a write to
+//                             the mailbox ($BFFF) is also passed to core 0.
 // The 74LVC245 does the rest in hardware: enabled by ROSCS | MREQ | BUS_OFF, direction RD.
 //
 // Core 0 keeps BUS_OFF high until DOCK_SENSE shows a steady 2068 +5 V (and drops it at once
 // when it goes), runs USB (serial + the cart drive), blinks the LEDs and prints status.
-// The cart on the drive is loaded at boot; a new one copied over USB is swapped in while
-// the 2068 is off (straight away, or at its next power-down). The 2068 reads the dock only
-// at power-up, so switch it off and on to start the new cart. With no cart on the drive the
-// image built in at compile time (rom_image.h) is served. Hold MENU at power-up to keep the
-// cart off the bus.
+// Each time the 2068 powers up, core 0 picks what to serve:
+//   - the cart menu (menu/menu.asm) if MENU is held, or was pressed while the 2068 was on;
+//   - otherwise the current cart: the one chosen in the menu or copied over USB last, or
+//     the image built in at compile time (rom_image.h) if the drive has none.
+// The menu lists the carts on the drive. Choosing one writes its number to the mailbox; the
+// cart swaps the image and the menu restarts the 2068, which then reads the new cart.
+// Entry 0 starts the 2068 without the cart, until its next power-up.
 //
-// LEDs: red = cart on the bus; white = flickers with dock reads. Both blink together while a
-// new cart waits for the 2068 to be power-cycled.
+// LEDs: red = cart on the bus; white = flickers with dock reads. Both blink together while
+// something waits for the next power-up (a cart copied over USB, or the menu).
 
 #include <stdio.h>
 #include <string.h>
@@ -29,6 +32,7 @@
 #include "tusb.h"
 #include "flashdisk.h"
 #include "loader.h"
+#include "menu_image.h"
 #include "rom_image.h"
 
 enum {
@@ -44,13 +48,31 @@ enum {
 #define DOCK_OFF_V 4.0f
 #define RESCAN_IDLE_MS 1500                           // quiet time after host writes before a rescan
 
+// the menu's directory table (see menu/menu.asm)
+#define MENU_ORG 0x8000
+#define MENU_DIR 0x9000
+#define MENU_NAMES 0x9010
+#define MENU_NAME_LEN 32
+#define MENU_MAX 100
+#define MAILBOX 0xbfff
+
 static uint8_t image[65536];                          // SRAM copy core 1 serves
 static volatile uint8_t ram_chunks;
+static volatile uint32_t n_reads, n_writes, last_addr;
+static volatile uint32_t mailbox;                     // 0x100 | byte when the 2068 writes $BFFF
+
+static cart_image_t cart;                             // the current cart, as loaded
+static cart_image_t staged;                           // a cart copied over USB, for the next power-up
+static cart_image_t menu;                             // the menu, with the directory filled in
+static char menu_names[MENU_MAX][64];
+static int menu_count;
+static bool staged_pending, menu_next;
+
+enum serving { SERVE_NONE, SERVE_CART, SERVE_MENU };
+static enum serving serving = SERVE_NONE;
+static const char *const SERVING_NAME[] = {"none", "cart", "menu"};
 static char image_name[64];
 static uint8_t image_chunks;
-static cart_image_t staged;                           // a new cart, waiting for the 2068 to be off
-static bool staged_pending;
-static volatile uint32_t n_reads, n_writes, last_addr;
 
 static void __not_in_flash_func(bus_core)(void) {
     save_and_disable_interrupts();
@@ -71,6 +93,7 @@ static void __not_in_flash_func(bus_core)(void) {
             for (volatile int i = 0; i < 4; i++) { }                // let the buffer settle
             uint8_t d = (sio_hw->gpio_in >> PIN_MD0) & 0xff;
             if (ram & (1u << (a >> 13))) image[a] = d;
+            if (a == MAILBOX) mailbox = 0x100u | d;
             while (!(sio_hw->gpio_in & (M_WR | M_ROSCS))) { }
             n_writes = ++writes; last_addr = a;
         }
@@ -78,16 +101,41 @@ static void __not_in_flash_func(bus_core)(void) {
 }
 
 // Only while BUS_OFF is high: stop core 1, swap the image, start it again.
-static void install(const uint8_t *data, uint8_t chunks, uint8_t ram, const char *name, bool running) {
+static void install(const cart_image_t *img, enum serving what) {
+    static bool running;
     if (running) {
         multicore_reset_core1();
         sio_hw->gpio_oe_clr = M_MD;
     }
-    memcpy(image, data, sizeof image);
-    image_chunks = chunks;
-    ram_chunks = ram;
-    strncpy(image_name, name, sizeof image_name - 1);
+    memcpy(image, img->data, sizeof image);
+    image_chunks = img->chunks;
+    ram_chunks = img->ram;
+    strncpy(image_name, img->name, sizeof image_name - 1);
+    mailbox = 0;
     multicore_launch_core1(bus_core);
+    running = true;
+    serving = what;
+}
+
+// The menu image: the menu program at $8000 and the drive's carts in its directory table.
+// Built only when the menu is about to be served, so menu_names always matches what the
+// 2068 shows, even if the drive changes while the menu is up.
+static void build_menu(void) {
+    memset(menu.data, 0xff, sizeof menu.data);
+    memcpy(menu.data + MENU_ORG, menu_bin, sizeof menu_bin);
+    menu_count = loader_list(menu_names, MENU_MAX);
+    const char *current = loader_current();
+    uint8_t cur = 0;
+    memset(menu.data + MENU_DIR, 0, MENU_NAMES - MENU_DIR + MENU_MAX * MENU_NAME_LEN);
+    for (int i = 0; i < menu_count; i++) {
+        strncpy((char *)menu.data + MENU_NAMES + i * MENU_NAME_LEN, menu_names[i], MENU_NAME_LEN - 1);
+        if (strcmp(menu_names[i], current) == 0) cur = (uint8_t)(i + 1);
+    }
+    menu.data[MENU_DIR] = (uint8_t)menu_count;
+    menu.data[MENU_DIR + 1] = cur;
+    menu.chunks = 0x30;                               // chunks 4 and 5 (the mailbox)
+    menu.ram = 0;
+    strcpy(menu.name, "cart menu");
 }
 
 static float sense_volts(int adc_input) {
@@ -98,6 +146,42 @@ static float sense_volts(int adc_input) {
 }
 
 static uint32_t now_ms(void) { return to_ms_since_boot(get_absolute_time()); }
+
+// The 2068 has just powered up (steady +5 V, bus still off): choose what to serve.
+static void power_up(void) {
+    if (staged_pending) {
+        memcpy(&cart, &staged, sizeof cart);
+        staged_pending = false;
+    }
+    bool want_menu = !gpio_get(PIN_MENU) || menu_next;
+    menu_next = false;
+    if (want_menu) {
+        build_menu();
+        install(&menu, SERVE_MENU);
+    }
+    else install(&cart, SERVE_CART);
+    printf("2068 on: serving %s\n", image_name);
+}
+
+// The menu wrote its choice to the mailbox. The 2068 is waiting in HOME RAM and restarts
+// in about a second, so swap the image now.
+static void menu_choice(uint8_t entry) {
+    if (entry == 0) {
+        gpio_put(PIN_BUS_OFF, 1);
+        serving = SERVE_NONE;                        // off the bus until the next power-up
+        printf("menu: no cartridge\n");
+        return;
+    }
+    if (entry > menu_count || !loader_load_name(menu_names[entry - 1], &staged)) {
+        printf("menu: entry %u failed, back to the menu\n", entry);
+        staged_pending = false;                       // `staged` may hold part of the failed file
+        return;                                       // the 2068 restarts into the menu again
+    }
+    memcpy(&cart, &staged, sizeof cart);
+    staged_pending = false;                           // the menu choice wins over a USB copy
+    gpio_put(PIN_BUS_OFF, 1);
+    install(&cart, SERVE_CART);
+}
 
 int main(void) {
     gpio_init(PIN_BUS_OFF);
@@ -116,21 +200,23 @@ int main(void) {
     adc_gpio_init(PIN_DOCK_SENSE);
     adc_gpio_init(PIN_VBUS_SENSE);
 
-    // the cart on the drive, else the built-in image
+    // the cart on the drive, else the built-in image; served once the 2068 is on
     uint32_t t0 = time_us_32();
     flashdisk_init();
-    if (loader_scan(&staged, true))
-        install(staged.data, staged.chunks, staged.ram, staged.name, false);
-    else
-        install(rom_image_flash, ROM_IMAGE_CHUNKS, ROM_IMAGE_RAM, ROM_IMAGE_NAME " (built in)", false);
+    if (!loader_scan(&cart, true)) {
+        memcpy(cart.data, rom_image_flash, sizeof cart.data);
+        cart.chunks = ROM_IMAGE_CHUNKS;
+        cart.ram = ROM_IMAGE_RAM;
+        strcpy(cart.name, ROM_IMAGE_NAME " (built in)");
+    }
     uint32_t boot_us = time_us_32() - t0;
-    bool hold_off = !gpio_get(PIN_MENU);              // MENU held at power-up: stay off the bus
 
     tusb_init();                                      // USB: serial (stdio) + the cart drive
     stdio_init_all();
 
-    bool bus_on = false;
-    int good = 0;
+    bool bus_on = false, powered = false;
+    int good = 0, menu_low = 0;
+    bool menu_was_down = !gpio_get(PIN_MENU);
     uint32_t last_tick = now_ms(), next_print = last_tick + 1000, last_reads = 0, tick = 0;
     float dock = 0;
     for (;;) {
@@ -139,13 +225,38 @@ int main(void) {
         if (t == last_tick) continue;
         last_tick = t;
 
-        // dock power: the bus goes on only after ~10 ms of steady +5 V
+        // dock power: what to serve is chosen after ~10 ms of steady +5 V
         dock = sense_volts(0);
-        if (dock < DOCK_OFF_V || hold_off) {
-            gpio_put(PIN_BUS_OFF, 1); bus_on = false; good = 0;
-        } else if (!bus_on && !staged_pending && dock > DOCK_ON_V && ++good >= 10) {
-            gpio_put(PIN_BUS_OFF, 0); bus_on = true;
+        if (dock < DOCK_OFF_V) {
+            powered = false; good = 0;
+        } else if (dock > DOCK_ON_V && !powered && ++good >= 10) {
+            powered = true;
+            power_up();
+            menu_was_down = !gpio_get(PIN_MENU);      // a hold at power-up is not a press
         }
+        bool want_bus = powered && serving != SERVE_NONE;
+        if (want_bus != bus_on) {
+            gpio_put(PIN_BUS_OFF, !want_bus);
+            bus_on = want_bus;
+        }
+
+        // the menu's choice
+        uint32_t mb = mailbox;
+        if (mb && serving == SERVE_MENU) {
+            mailbox = 0;
+            menu_choice((uint8_t)mb);
+            bus_on = false;                           // back on next tick if still serving
+        }
+
+        // MENU pressed (debounced): the menu at the next power-up; press again to cancel
+        menu_low = gpio_get(PIN_MENU) ? 0 : menu_low + 1;
+        bool menu_down = menu_low >= 20;
+        if (menu_down && !menu_was_down && serving != SERVE_MENU) {
+            menu_next = !menu_next;
+            printf(menu_next ? "MENU: the menu comes up at the next power-up\n" : "MENU: cancelled\n");
+        }
+        if (gpio_get(PIN_MENU)) menu_was_down = false;
+        else if (menu_down) menu_was_down = true;
 
         // the drive: write back the cache, then rescan once the host has gone quiet
         flashdisk_poll(t);
@@ -154,26 +265,22 @@ int main(void) {
             flashdisk_flush();
             if (loader_scan(&staged, false)) {
                 staged_pending = true;
-                if (bus_on) printf("new cart waiting: switch the 2068 off and on\n");
+                printf("new cart waiting: switch the 2068 off and on\n");
             }
-        }
-        if (staged_pending && !bus_on) {
-            install(staged.data, staged.chunks, staged.ram, staged.name, true);
-            staged_pending = false;
-            printf("installed %s\n", image_name);
         }
 
         uint32_t r = n_reads;
-        bool flash = staged_pending && (tick & 128);
-        gpio_put(PIN_LED, staged_pending ? flash : bus_on);
-        gpio_put(PIN_LED2, staged_pending ? flash : (r != last_reads && (tick & 64)));
+        bool waiting = staged_pending || menu_next;
+        bool flash = tick & 128;
+        gpio_put(PIN_LED, waiting ? flash : bus_on);
+        gpio_put(PIN_LED2, waiting ? flash : (r != last_reads && (tick & 64)));
 
         if ((int32_t)(t - next_print) >= 0) {
             next_print = t + 1000;
-            printf("romemu [%s] chunks %02x RAM %02x  DOCK %.2f V VBUS %.2f V  bus %s%s  reads %lu (+%lu) "
+            printf("romemu %s [%s] chunks %02x RAM %02x  DOCK %.2f V VBUS %.2f V  bus %s  reads %lu (+%lu) "
                    "writes %lu  last %04lx  boot %lu us\n",
-                   image_name, image_chunks, ram_chunks, dock, sense_volts(1), bus_on ? "ON" : "off",
-                   hold_off ? " (MENU hold)" : "", (unsigned long)r, (unsigned long)(r - last_reads),
+                   SERVING_NAME[serving], image_name, image_chunks, ram_chunks, dock, sense_volts(1),
+                   bus_on ? "ON" : "off", (unsigned long)r, (unsigned long)(r - last_reads),
                    (unsigned long)n_writes, (unsigned long)last_addr, (unsigned long)boot_us);
             last_reads = r;
         }

@@ -82,7 +82,8 @@ static const char README[] =
     "A .BIN loads at $8000 (AROS) unless its name says otherwise, for\r\n"
     "example GAME@0000.BIN for an LROS image at $0000.\r\n"
     "\r\n"
-    "Hold MENU while powering the 2068 to start it without the cart.\r\n";
+    "Hold MENU while switching the 2068 on for a menu of the carts on\r\n"
+    "this drive (or press MENU while it runs: the menu comes up next time).\r\n";
 
 _Static_assert(sizeof README - 1 <= DISK_SECTOR, "README fits one cluster");
 

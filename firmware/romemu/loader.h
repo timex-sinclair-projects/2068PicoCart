@@ -13,3 +13,13 @@ typedef struct {
 // Rescans the drive. Returns true when the chosen cart differs from the one in `img`
 // (by name, size and date) and has been loaded into it. `boot` picks the remembered cart.
 bool loader_scan(cart_image_t *img, bool boot);
+
+// Cart files found by the last scan, sorted by name. Returns how many (up to max).
+int loader_list(char (*names)[64], int max);
+
+// Loads the named cart from the last scan into `img` and makes it the current cart
+// (remembered across power cycles).
+bool loader_load_name(const char *name, cart_image_t *img);
+
+// The current cart's file name ("" if none).
+const char *loader_current(void);

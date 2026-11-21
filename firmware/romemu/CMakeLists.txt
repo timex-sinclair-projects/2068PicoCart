@@ -16,11 +16,26 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/rom_image.h
     DEPENDS ${CMAKE_CURRENT_LIST_DIR}/mkimage.py VERBATIM)
 add_custom_target(rom_image DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/rom_image.h)
 
+# The cart menu (Z80). Reassembled when sjasmplus is installed, else menu/menu.bin is used.
+find_program(SJASMPLUS sjasmplus)
+if (SJASMPLUS)
+    add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/menu.bin
+        COMMAND ${SJASMPLUS} --nologo --raw=${CMAKE_CURRENT_BINARY_DIR}/menu.bin ${CMAKE_CURRENT_LIST_DIR}/menu/menu.asm
+        DEPENDS ${CMAKE_CURRENT_LIST_DIR}/menu/menu.asm VERBATIM)
+    set(MENU_BIN ${CMAKE_CURRENT_BINARY_DIR}/menu.bin)
+else()
+    set(MENU_BIN ${CMAKE_CURRENT_LIST_DIR}/menu/menu.bin)
+endif()
+add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/menu_image.h
+    COMMAND python3 ${CMAKE_CURRENT_LIST_DIR}/bin2h.py ${MENU_BIN} menu_bin ${CMAKE_CURRENT_BINARY_DIR}/menu_image.h
+    DEPENDS ${MENU_BIN} ${CMAKE_CURRENT_LIST_DIR}/bin2h.py VERBATIM)
+add_custom_target(menu_image DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/menu_image.h)
+
 # FatFs (read side of the cart drive) as bundled with TinyUSB
 set(FATFS_DIR ${PICO_SDK_PATH}/lib/tinyusb/lib/fatfs/source)
 
 add_executable(romemu main.c flashdisk.c loader.c usb_descriptors.c ${FATFS_DIR}/ff.c ${FATFS_DIR}/ffunicode.c)
-add_dependencies(romemu rom_image)
+add_dependencies(romemu rom_image menu_image)
 target_include_directories(romemu PRIVATE ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_BINARY_DIR} ${FATFS_DIR})
 target_compile_definitions(romemu PRIVATE
     PICO_STDIO_USB_ENABLE_RESET_VIA_VENDOR_INTERFACE=1

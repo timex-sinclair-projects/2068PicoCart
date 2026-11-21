@@ -11,7 +11,8 @@ A dock cartridge for the Timex Sinclair 2068, built around a Raspberry Pi RP2354
 - **Thumb-drive loading.** Over USB the cart appears as a 1.4 MB drive called `PICOCART`. Copy a cart onto it, then switch the 2068 off and on. The cart serves the file you copied most recently and remembers it across power cycles.
 - **AROS and LROS images.** Supports `.dck` files (the EightyOne/Warajevo dock format, including RAM chunks) and raw `.bin`/`.rom` images. A raw image loads at $8000 unless its name gives an address, for example `GAME@0000.BIN`.
 - **Full-speed bus emulation.** One RP2350 core does nothing but serve the bus. It runs from SRAM with interrupts off and handles about 650,000 dock reads per second in the 2068.
-- **Safe on the bus.** The 74LVC245 data buffer stays off until the cart sees the 2068's +5 V hold steady. Hold **MENU** at power-up to start the 2068 without the cart.
+- **On-screen cart menu.** Hold **MENU** while switching the 2068 on, and it shows a list of the carts on the drive. Pick one with the cursor keys (or Q/A) and ENTER, and the 2068 restarts into that cart, with no power cycle. Pressing MENU while the 2068 runs brings the menu up at the next power-up instead. The first entry starts the 2068 in BASIC with the cart off the bus.
+- **Safe on the bus.** The 74LVC245 data buffer stays off until the cart sees the 2068's +5 V hold steady.
 - **USB serial.** Status and debug output come over the same USB-C cable. `picotool load -f` can reflash the cart without pressing BOOTSEL.
 - **Optional display.** There are holes for a 0.91 in 128×32 SSD1306 I2C OLED (J3, not fitted at the factory).
 
@@ -44,7 +45,11 @@ A dock cartridge for the Timex Sinclair 2068, built around a Raspberry Pi RP2354
 Two programs are in [`firmware/`](firmware). Both use the board header in [`firmware/boards`](firmware/boards):
 
 - [`bringup`](firmware/bringup) checks a new board. It holds the bus buffer off, then reports the +5 V rails, activity on the bus lines, the MD float test and an I2C scan over USB serial.
-- [`romemu`](firmware/romemu) is the cartridge firmware.
+- [`romemu`](firmware/romemu) is the cartridge firmware. The cart menu is Z80 code in [`romemu/menu`](firmware/romemu/menu). The build reassembles it with [sjasmplus](https://github.com/z00m128/sjasmplus) when that's installed, and otherwise uses the committed `menu.bin`.
+
+### How the menu works
+
+The menu is a machine-code AROS cart that the firmware serves at $8000, with a directory table at $9000 that lists the carts on the drive. When you choose one, the menu copies a short routine into HOME RAM and runs it from there. The routine writes the entry number to $BFFF in the dock, the cart's mailbox. It then waits about a second while the firmware swaps in the chosen cart, pages HOME back in and jumps to $0000. The 2068 starts up again and reads the new cart's header. [`firmware/tests/menu_dck.py`](firmware/tests/menu_dck.py) builds the menu with a test directory as a `.dck`, for trying it in an emulator such as ZEsarUX.
 
 ### Build
 
@@ -81,15 +86,17 @@ On first boot the firmware formats the drive and puts a `README.TXT` on it. If t
 2. Copy a `.dck`, `.bin` or `.rom` file onto it, then eject the drive.
 3. Switch the 2068 off and on. The 2068 reads the dock only at power-up.
 
-If the 2068 is running when you copy, the cart keeps serving the old cart until the 2068 is switched off. Both LEDs blink together while a new cart is waiting. The cart can be powered by the 2068, by USB, or by both at once.
+If the 2068 is running when you copy, the cart keeps serving the old cart until the 2068 is switched off. Both LEDs blink together while a new cart is waiting.
+
+To switch between carts already on the drive, hold MENU while switching the 2068 on and pick one from the list. The cart you pick stays the current cart until you pick or copy another. The cart can be powered by the 2068, by USB, or by both at once.
 
 ## Status
 
 Rev 0.1 boards have been built and brought up. These carts run from the cart's ROM: AROS BASIC carts (Hello world, and Profile 2068's 16K at $8000–$BFFF), 32K machine-code carts (73000 Flight Simulator), and LROS carts that replace the HOME ROM (Space Raiders, 16K at $0000–$3FFF). RAM in the dock bank works: [`firmware/tests/ramtest.py`](firmware/tests/ramtest.py) builds a test cart that writes and checks two patterns across 8 KB of cart RAM at $C000. It passes, and the cart counted exactly 16,384 dock writes. Loading from the USB drive works.
 
 Not tested yet:
+- the on-screen cart menu on real hardware. In ZEsarUX the menu draws, scrolls, handles 0 and 100 carts, and writes the chosen entry to the mailbox before restarting the 2068.
 - the OLED
-- switching between carts with MENU
 
 ## License
 

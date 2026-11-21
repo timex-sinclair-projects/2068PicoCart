@@ -185,3 +185,38 @@ bool loader_scan(cart_image_t *img, bool boot) {
     f_mount(NULL, "", 0);
     return changed;
 }
+
+static int by_name(const void *a, const void *b) {
+    const char *x = a, *y = b;
+    for (; *x && *y; x++, y++) {
+        int d = tolower((unsigned char)*x) - tolower((unsigned char)*y);
+        if (d) return d;
+    }
+    return (unsigned char)*x - (unsigned char)*y;
+}
+
+int loader_list(char (*names)[64], int max) {
+    int n = n_cur < max ? n_cur : max;
+    for (int i = 0; i < n; i++) strcpy(names[i], cur[i].name);
+    qsort(names, (size_t)n, sizeof names[0], by_name);
+    return n;
+}
+
+bool loader_load_name(const char *name, cart_image_t *img) {
+    for (int i = 0; i < n_cur; i++) {
+        if (strcmp(cur[i].name, name) != 0) continue;
+        entry_t e = cur[i];
+        if (f_mount(&fs, "", 1) != FR_OK) return false;
+        bool ok = load(&e, img);
+        f_mount(NULL, "", 0);
+        if (ok) {
+            chosen = e;
+            remember(e.name);
+            printf("menu: cart %s (chunks %02x, RAM %02x)\n", e.name, img->chunks, img->ram);
+        }
+        return ok;
+    }
+    return false;
+}
+
+const char *loader_current(void) { return chosen.name; }
