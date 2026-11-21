@@ -46,6 +46,10 @@ Two programs are in [`firmware/`](firmware). Both use the board header in [`firm
 - [`bringup`](firmware/bringup) checks a new board. It holds the bus buffer off, then reports the +5 V rails, activity on the bus lines, and the MD float test over USB serial.
 - [`romemu`](firmware/romemu) is the cartridge firmware. The cart menu is Z80 code in [`romemu/menu`](firmware/romemu/menu). The build reassembles it with [sjasmplus](https://github.com/z00m128/sjasmplus) when that's installed, and otherwise uses the committed `menu.bin`.
 
+### Bus behaviour
+
+[BUS.md](BUS.md) sets out exactly when the cart drives the 2068's buses, with references to the schematic and firmware. Read it if you're combining the cart with other hardware on the bus, such as a TS-Pico on the rear expansion port.
+
 ### How the menu works
 
 The menu is a machine-code AROS cart that the firmware serves at $8000, with a directory table at $9000 that lists the carts on the drive. When you choose one, the menu copies a short routine into HOME RAM and runs it from there. The routine writes the entry number to $BFFF in the dock, the cart's mailbox. It then waits about a second while the firmware swaps in the chosen cart, pages HOME back in and jumps to $0000. The 2068 starts up again and reads the new cart's header. [`firmware/tests/menu_dck.py`](firmware/tests/menu_dck.py) builds the menu with a test directory as a `.dck`, for trying it in an emulator such as ZEsarUX.
