@@ -109,6 +109,14 @@ From the 2068's power alone, the cart's firmware is running 0.1 ms after power r
 
 Rev 0.1 boards have been built and brought up. These carts run from the cart's ROM: AROS BASIC carts (Hello world, and Profile 2068's 16K at $8000–$BFFF), 32K machine-code carts (73000 Flight Simulator), and LROS carts that replace the HOME ROM (Space Raiders, 16K at $0000–$3FFF). RAM in the dock bank works: [`firmware/tests/ramtest.py`](firmware/tests/ramtest.py) builds a test cart that writes and checks two patterns across 8 KB of cart RAM at $C000. It passes, and the cart counted exactly 16,384 dock writes. Loading from the USB drive works. The cart runs on the 2068's power alone, with no USB. The on-screen cart menu works on the 2068: choosing a cart restarts the 2068 into it, and the "no cartridge" entry starts BASIC with the cart off the bus. Pressing MENU while a cart runs brings up the menu at the next power-up, with or without USB power in between, and a second press cancels it. Every feature has now been tested on hardware.
 
+Rev 0.2 is designed but not yet built. Its fab files are in [`hardware/fab/jlcpcb`](hardware/fab/jlcpcb). The changes are small and come from using rev 0.1:
+- MENU and BOOT labels on the silkscreen by the buttons.
+- R15, the white LED's resistor, is 3.3 kΩ instead of 100 Ω. At 100 Ω the white LED was far brighter than the red one; rev 0.1 firmware dims it to 3% with PWM instead. Build the firmware for rev 0.2 with `-DLED2_PERCENT=100`.
+- No OLED header. The dock covers that part of the board, so a display there could not be seen. GPIO34 and GPIO35 are now spare.
+- "2068 PicoCart rev 0.2" on the underside, so the two revisions can be told apart.
+
+The circuit and routing are otherwise the same as rev 0.1, so rev 0.2 should behave the same. Still to check when the boards arrive: the white LED's brightness at 3.3 kΩ.
+
 ## License
 
 The hardware is licensed under [CERN-OHL-P-2.0](hardware/LICENSE) and the firmware under [MIT](firmware/LICENSE). See [LICENSE.md](LICENSE.md) for details.
