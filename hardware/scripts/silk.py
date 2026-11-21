@@ -6,6 +6,7 @@
     silkscreen, no other part's body and stays 0.6 mm inside the board; big parts may
     fall back to the middle of their own body; if nothing fits the designator is
     hidden on silk (it stays on F.Fab for the assembly drawing)
+  * the buttons are labelled MENU (SW1) and BOOT (SW2), next to each button
   * silkscreen graphics that cross or hug the board edge (connector and antenna
     outlines) are removed
 """
@@ -17,6 +18,8 @@ PCB = os.path.join(HW, "picocart.kicad_pcb")
 MM, T = pcbnew.FromMM, pcbnew.ToMM
 SIZE, STROKE, EDGE = 0.8, 0.15, 0.6
 BODY_H = 35.66        # geometry.BODY_H: the tongue below carries no silk
+LABEL = 0.8           # button labels: designator size, so BOOT fits between SW2 and R11
+LABELS = {"SW2": "BOOT", "SW1": "MENU"}   # BOOT first: R11 under SW2 leaves it the least room
 
 
 def box(bb, grow=0.0):
@@ -56,6 +59,33 @@ def main():
             bodies[f.GetReference()] = box(f.GetBoundingBox(False), 0.05)
 
     placed, hidden = {}, []
+
+    # button labels first, so the designators work around them; a rerun replaces the old ones
+    for d in list(b.GetDrawings()):
+        if isinstance(d, pcbnew.PCB_TEXT) and d.GetLayer() == pcbnew.F_SilkS and d.GetText() in LABELS.values():
+            b.Remove(d)
+    for owner, label in LABELS.items():
+        x0, y0, x1, y1 = bodies[owner]
+        w, h = len(label) * LABEL * 0.87 + 0.13, LABEL + STROKE + 0.08
+        for g in (0.2, 0.5, 0.9, 1.4):
+            spots = [((x0 + x1) / 2 + dx, y1 + h / 2 + g) for dx in sorted((k / 4 for k in range(-12, 13)), key=abs)]
+            tb = next((s for s in ((px - w / 2, py - h / 2, px + w / 2, py + h / 2) for px, py in spots)
+                       if s[0] >= EDGE and s[1] >= EDGE and s[2] <= W - EDGE and s[3] <= BODY_H - EDGE
+                       and not any(hit(s, p) for p in pads) and not any(hit(s, sk) for _, sk in silk)
+                       and not any(hit(s, (o[0] - 1.2, o[1], o[2] + 1.2, o[3])) for o in placed.values())   # 1.2 mm between labels
+                       and not any(hit(s, bd) for other, bd in bodies.items() if other != owner)), None)
+            if tb:
+                break
+        if not tb:
+            sys.exit(f"no room for the {label} label by {owner}")
+        txt = pcbnew.PCB_TEXT(b)
+        txt.SetText(label); txt.SetLayer(pcbnew.F_SilkS)
+        txt.SetTextSize(pcbnew.VECTOR2I(MM(LABEL), MM(LABEL))); txt.SetTextThickness(MM(STROKE))
+        txt.SetHorizJustify(pcbnew.GR_TEXT_H_ALIGN_CENTER); txt.SetVertJustify(pcbnew.GR_TEXT_V_ALIGN_CENTER)
+        txt.SetPosition(pcbnew.VECTOR2I(MM((tb[0] + tb[2]) / 2), MM((tb[1] + tb[3]) / 2)))
+        b.Add(txt)
+        placed[label] = tb
+        print(f"label {label} at {(tb[0] + tb[2]) / 2:.2f}, {(tb[1] + tb[3]) / 2:.2f}")
 
     def try_place(f):
         """Put f's designator at the first candidate spot that is clear; returns its ink box or None."""
@@ -122,7 +152,7 @@ def main():
     # second chance: lift a neighbour's designator, place the hidden one, then put the neighbour somewhere else
     for name in list(hidden):
         x0, y0, x1, y1 = bodies[name]
-        near = [n for n, tb in placed.items() if hit(tb, (x0 - 3.5, y0 - 3.5, x1 + 3.5, y1 + 3.5))]
+        near = [n for n, tb in placed.items() if n in byname and hit(tb, (x0 - 3.5, y0 - 3.5, x1 + 3.5, y1 + 3.5))]
         for n in near:
             old_tb = placed.pop(n)
             ref_n = byname[n].Reference(); keep = (ref_n.GetPosition(), ref_n.GetTextAngle())
