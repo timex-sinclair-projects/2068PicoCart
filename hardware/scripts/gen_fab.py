@@ -1,0 +1,128 @@
+#!/usr/bin/env python3
+"""Fabrication outputs for JLCPCB: Gerbers + drill (zipped), BOM and CPL.
+
+  python3 scripts/gen_fab.py        (plain python3; calls kicad-cli)
+
+Writes hardware/fab/jlcpcb/: picocart-gerbers.zip, picocart-bom.csv,
+picocart-cpl.csv, and fab/NOTES.md with what to check on upload.
+"""
+import csv, os, re, shutil, subprocess, sys, zipfile
+
+HW = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+KC = "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli"
+PCB = os.path.join(HW, "picocart.kicad_pcb")
+SCH = os.path.join(HW, "picocart.kicad_sch")
+OUT = os.path.join(HW, "fab", "jlcpcb")
+GERB = os.path.join(OUT, "gerbers")
+LAYERS = "F.Cu,In1.Cu,In2.Cu,B.Cu,F.Paste,B.Paste,F.SilkS,B.SilkS,F.Mask,B.Mask,Edge.Cuts"
+NOT_ASSEMBLED = re.compile(r"^(J1|TP\d+|FID\d+)$")   # edge fingers, test pads, fiducials
+
+
+def expand_refs(field):
+    """'C1-C8,C10,R5' -> ['C1', ..., 'C8', 'C10', 'R5']"""
+    out = []
+    for tok in re.split(r"[,;]", field):
+        tok = tok.strip()
+        if not tok:
+            continue
+        m = re.match(r"^([A-Za-z]+)(\d+)-([A-Za-z]+)(\d+)$", tok)
+        if m and m.group(1) == m.group(3):
+            out += [f"{m.group(1)}{i}" for i in range(int(m.group(2)), int(m.group(4)) + 1)]
+        else:
+            out.append(tok)
+    return out
+
+
+def run(*args):
+    r = subprocess.run([KC, *args], capture_output=True, text=True)
+    if r.returncode:
+        sys.exit(f"kicad-cli failed: {' '.join(args)}\n{r.stdout}{r.stderr}")
+    return r.stdout
+
+
+def main():
+    bom_only = "--bom-only" in sys.argv
+    if not bom_only:
+        shutil.rmtree(OUT, ignore_errors=True)
+    os.makedirs(GERB, exist_ok=True)
+    # --- Gerbers + drill -------------------------------------------------
+    if not bom_only: run("pcb", "export", "gerbers", "--output", GERB, "--layers", LAYERS, "--subtract-soldermask",
+        "--no-x2", "--no-netlist", "--disable-aperture-macros", PCB)
+    if not bom_only: run("pcb", "export", "drill", "--output", GERB, "--format", "excellon", "--excellon-units", "mm",
+        "--excellon-zeros-format", "decimal", "--drill-origin", "absolute", "--generate-map", "--map-format", "gerberx2", PCB)
+    zpath = os.path.join(OUT, "picocart-gerbers.zip")
+    if not bom_only:
+      with zipfile.ZipFile(zpath, "w", zipfile.ZIP_DEFLATED) as z:
+        for f in sorted(os.listdir(GERB)):
+            z.write(os.path.join(GERB, f), f)
+      print("gerbers:", zpath, len(os.listdir(GERB)), "files")
+    # --- BOM (JLC format) --------------------------------------------------
+    bom_src = os.path.join(HW, "bom", "picocart-jlcpcb-bom.csv")
+    run("sch", "export", "bom", "--output", bom_src, "--fields", "Value,Reference,Footprint,LCSC",
+        "--labels", "Comment,Designator,Footprint,LCSC Part #", "--group-by", "Value,Footprint", "--exclude-dnp", SCH)
+    # The full BOM lists every part, DNP ones too, with who fits it: JLCPCB, by hand (DNP
+    # parts), or nobody (edge fingers, test pads, fiducials).
+    full = os.path.join(HW, "bom", "picocart-bom-full.csv")
+    run("sch", "export", "bom", "--output", full,
+        "--fields", "Value,Reference,Footprint,MPN,LCSC,${QUANTITY},${DNP}", "--labels", "Value,Reference,Footprint,MPN,LCSC,Qty,DNP",
+        "--group-by", "Value,Footprint,${DNP}", SCH)
+    with open(full, newline="") as f:
+        full_rows = list(csv.DictReader(f))
+    for r in full_rows:
+        refs = expand_refs(r["Reference"])
+        if r.pop("DNP").strip():
+            r["Fitted by"] = "hand (DNP)"
+        elif all(NOT_ASSEMBLED.match(x) for x in refs):
+            r["Fitted by"] = "none (board feature)"
+        else:
+            r["Fitted by"] = "JLCPCB"
+    with open(full, "w", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=["Value", "Reference", "Footprint", "MPN", "LCSC", "Qty", "Fitted by"], quoting=csv.QUOTE_ALL)
+        w.writeheader(); w.writerows(full_rows)
+    rows, assembled, missing = [], set(), []
+    with open(bom_src, newline="") as f:
+        for r in csv.DictReader(f):
+            refs = expand_refs(r["Designator"])
+            refs = [x for x in refs if not NOT_ASSEMBLED.match(x)]
+            if not refs:
+                continue
+            if not r["LCSC Part #"]:
+                missing.append((r["Comment"], ", ".join(refs)))
+            rows.append({"Comment": r["Comment"], "Designator": ",".join(refs), "Footprint": r["Footprint"].split(":")[-1], "LCSC Part #": r["LCSC Part #"]})
+            assembled.update(refs)
+    with open(os.path.join(OUT, "picocart-bom.csv"), "w", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=["Comment", "Designator", "Footprint", "LCSC Part #"]); w.writeheader(); w.writerows(rows)
+    print("bom:", len(rows), "lines,", len(assembled), "parts; missing LCSC:", missing)
+    # --- CPL -------------------------------------------------------------
+    if bom_only:
+        print("bom only; gerbers/CPL not regenerated"); return
+    pos = os.path.join(OUT, "pos.csv")
+    run("pcb", "export", "pos", "--output", pos, "--format", "csv", "--units", "mm", "--side", "both", "--exclude-dnp", PCB)
+    cpl, skipped, th = [], [], []
+    with open(pos, newline="") as f:
+        for r in csv.DictReader(f):
+            ref = r["Ref"]
+            if ref not in assembled:
+                skipped.append(ref); continue
+            cpl.append({"Designator": ref, "Mid X": f"{float(r['PosX']):.4f}mm", "Mid Y": f"{float(r['PosY']):.4f}mm",
+                        "Layer": r["Side"].capitalize(), "Rotation": f"{float(r['Rot']):.1f}"})
+    os.remove(pos)
+    with open(os.path.join(OUT, "picocart-cpl.csv"), "w", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=["Designator", "Mid X", "Mid Y", "Layer", "Rotation"]); w.writeheader(); w.writerows(cpl)
+    print("cpl:", len(cpl), "placements; skipped:", skipped)
+    with open(os.path.join(HW, "fab", "NOTES.md"), "w") as f:
+        f.write("# Fab outputs (generated by scripts/gen_fab.py)\n\n")
+        f.write("- `jlcpcb/picocart-gerbers.zip`: 4-layer Gerbers (F, In1 = GND, In2 = +3V3, B; paste, silk, mask, edge) and Excellon drill + map.\n")
+        f.write("- `jlcpcb/picocart-bom.csv`, `jlcpcb/picocart-cpl.csv`: JLCPCB assembly BOM and placement (top side; all mm, KiCad rotations).\n")
+        f.write(f"- Not in the BOM/CPL (not assembled): J1 (dock edge fingers), TP1-TP7 (test pads), {', '.join(sorted(skipped))}.\n")
+        f.write("- BOM lines with no LCSC number (pick at upload): " + ("; ".join(f"{c} ({r})" for c, r in missing) or "none") + ".\n")
+        f.write("- L1 (Abracon AOTA-B201610S3R3-101-T, the RP2350 core-regulator inductor) is polarised. The footprint copies LCSC's land pattern and pad numbering, so no rotation offset should be needed, but check the preview: the dot on L1 must be on pad 2 (net DVDD, marked by the silkscreen dot), the end toward the dock fingers. Check its stock at upload: it ran out on 2026-10-12. If it is out again, remove it from the BOM and CPL and fit it by hand.\n")
+        f.write("- DNP (footprint only, fitted by hand): R10 (0 R, dock BE to GPIO33); J3 (optional 0.91 in 128x32 SSD1306 I2C OLED module, holes GND/3V3/SCL/SDA; trim the pins flush underneath).\n")
+        f.write("- All drills are 0.3 mm or larger; all vias 0.6/0.3 mm.\n")
+        f.write("- Check rotations in JLCPCB's placement preview: JLC's part orientation differs from KiCad's for many footprints (QFN, SOT-223, SOIC, connectors); fix there, not here.\n")
+        f.write("- Upload order: PCB first (4 layers, 1.6 mm, ENIG or hard gold for the dock fingers, 30-45 degree finger bevel), then assembly with the BOM and CPL.\n")
+    print("wrote fab/NOTES.md")
+
+
+if __name__ == "__main__":
+    main()
