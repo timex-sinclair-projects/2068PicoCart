@@ -41,7 +41,7 @@ target_compile_definitions(romemu PRIVATE
     PICO_STDIO_USB_ENABLE_RESET_VIA_VENDOR_INTERFACE=1
     PICO_STDIO_USB_RESET_INTERFACE_SUPPORT_MS_OS_20_DESCRIPTOR=0
     PICO_STDIO_USB_ENABLE_RESET_VIA_BAUD_RATE=1)
-target_link_libraries(romemu pico_stdlib pico_multicore pico_unique_id hardware_adc hardware_flash
+target_link_libraries(romemu pico_stdlib pico_multicore pico_unique_id hardware_adc hardware_flash hardware_pwm
     tinyusb_device tinyusb_board)
 pico_enable_stdio_usb(romemu 1)
 pico_enable_stdio_uart(romemu 0)

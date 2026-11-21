@@ -27,6 +27,7 @@
 #include "hardware/adc.h"
 #include "hardware/clocks.h"
 #include "hardware/gpio.h"
+#include "hardware/pwm.h"
 #include "hardware/structs/sio.h"
 #include "hardware/sync.h"
 #include "tusb.h"
@@ -47,6 +48,8 @@ enum {
 #define M_MD (0xffu << PIN_MD0)
 #define DOCK_ON_V 4.4f
 #define DOCK_OFF_V 4.0f
+#define LED2_WRAP 999                                 // white LED PWM: 150 kHz at 150 MHz
+#define LED2_ON 30                                    // 3% duty: D4 is far brighter than the red LED
 #define RESCAN_IDLE_MS 1500                           // quiet time after host writes before a rescan
 
 // the menu's directory table (see menu/menu.asm)
@@ -196,7 +199,11 @@ int main(void) {
     }
     gpio_init(PIN_MENU); gpio_set_dir(PIN_MENU, GPIO_IN); gpio_pull_up(PIN_MENU);
     gpio_init(PIN_LED); gpio_set_dir(PIN_LED, GPIO_OUT);
-    gpio_init(PIN_LED2); gpio_set_dir(PIN_LED2, GPIO_OUT);
+    gpio_set_function(PIN_LED2, GPIO_FUNC_PWM);
+    uint led2_slice = pwm_gpio_to_slice_num(PIN_LED2);
+    pwm_set_wrap(led2_slice, LED2_WRAP);
+    pwm_set_gpio_level(PIN_LED2, 0);
+    pwm_set_enabled(led2_slice, true);
     adc_init();
     adc_gpio_init(PIN_DOCK_SENSE);
     adc_gpio_init(PIN_VBUS_SENSE);
@@ -275,7 +282,7 @@ int main(void) {
         bool waiting = staged_pending || config_menu_next();
         bool flash = tick & 128;
         gpio_put(PIN_LED, waiting ? flash : bus_on);
-        gpio_put(PIN_LED2, waiting ? flash : (r != last_reads && (tick & 64)));
+        pwm_set_gpio_level(PIN_LED2, (waiting ? flash : (r != last_reads && (tick & 64))) ? LED2_ON : 0);
 
         if ((int32_t)(t - next_print) >= 0) {
             next_print = t + 1000;
