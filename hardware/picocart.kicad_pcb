@@ -4975,7 +4975,7 @@
 				)
 			)
 		)
-		(property "Value" "100"
+		(property "Value" "3k3"
 			(at 0 1.43 0)
 			(layer "F.Fab")
 			(uuid "017018c8-7efc-40ee-82ac-c0eafbc56261")
@@ -5020,7 +5020,7 @@
 				)
 			)
 		)
-		(property "MPN" "0603WAF1000T5E"
+		(property "MPN" "0603WAF3301T5E"
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -5032,7 +5032,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C22775"
+		(property "LCSC" "C22978"
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)

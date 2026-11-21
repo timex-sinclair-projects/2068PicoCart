@@ -16,7 +16,7 @@
 "5k1","R6,R7","Resistor_SMD:R_0603_1608Metric","C23186"
 "33","R8,R9,R12","Resistor_SMD:R_0603_1608Metric","C23140"
 "1k","R11,R13,R14","Resistor_SMD:R_0603_1608Metric","C21190"
-"100","R15","Resistor_SMD:R_0603_1608Metric","C22775"
+"3k3","R15","Resistor_SMD:R_0603_1608Metric","C22978"
 "MENU","SW1","Button_Switch_SMD:SW_Push_1P1T_XKB_TS-1187A","C318885"
 "BOOTSEL","SW2","Button_Switch_SMD:SW_Push_1P1T_XKB_TS-1187A","C318885"
 "SWCLK","TP1","TestPoint:TestPoint_Pad_1.0x1.0mm",""

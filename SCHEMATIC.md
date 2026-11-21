@@ -173,7 +173,7 @@ U1 = RP2354B. Physical pin numbers will come from the RP2350 datasheet pin table
 | 40 | 49 | `DOCK_SENSE` | ADC0 | divider, ≤ 3.0 V (**not** 5 V tolerant) |
 | 41 | 52 | `VBUS_SENSE` | ADC1 | divider, ≤ 3.0 V (**not** 5 V tolerant) |
 | 42 | 53 | — | — | spare (3.3 V only) |
-| 43 | 54 | `LED2` | out | R15 100 Ω → D4 (white) |
+| 43 | 54 | `LED2` | out | R15 3.3 kΩ → D4 (white) |
 | 44 | 55 | `LED` | out | R11 1 kΩ → D3 (red) |
 | 45 | 56 | `MENU_n` | in | SW1 to GND, internal pull-up |
 | 46 | 57 | `UART_TX` | out | TP6 |
@@ -283,7 +283,7 @@ Notes:
 | TP1–TP5 | SWD pads: `SWCLK`, `SWDIO`, `RUN`, `3V3`, `GND` | 1.0 mm pads in a row, or a Tag-Connect TC2030 footprint |
 | TP6, TP7 | `UART_TX`, `UART_RX` | |
 | SW2 | BOOTSEL button (XKB TS-1187A-C-J-B, 5 mm stem, beside SW1) | Pulls QSPI_SS low through R14 1 kΩ. Hold while plugging in USB to enter the ROM bootloader |
-| D4, R15 | second LED, white 0603 (C2290, basic) | `LED2` (GPIO35) → R15 100 Ω → D4 |
+| D4, R15 | second LED, white 0603 (C2290, basic) | `LED2` (GPIO43) → R15 3.3 kΩ (C22978, basic) → D4. Rev 0.1 boards have 100 Ω, which is far too bright; the firmware dims D4 to 3% with PWM for them |
 | J3 | optional 128x32 I2C OLED, 4 holes at 2.54 mm: GND, 3V3, SCL, SDA | Not assembled; the module carries the pull-ups. A case variant is needed if fitted |
 | — | spare GPIO 36, 38, 39, 42 | unconnected |
 

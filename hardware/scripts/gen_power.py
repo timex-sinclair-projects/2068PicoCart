@@ -88,7 +88,7 @@ def main():
     s.glabel("LED", R11.pin("1"), IN); s.label("LED_A", R11.pin("2"))
     D3 = s.place("Device:LED", "D3", "red", "LED_SMD:LED_0603_1608Metric", 90, 230)
     s.label("GND", D3.pin("1")); s.label("LED_A", D3.pin("2"))
-    R15 = s.place("Device:R", "R15", "100", R0603, 60, 260)
+    R15 = s.place("Device:R", "R15", "3k3", R0603, 60, 260)   # white LED: 100 R was far too bright
     s.glabel("LED2", R15.pin("1"), IN); s.label("LED2_A", R15.pin("2"))
     D4 = s.place("Device:LED", "D4", "white", "LED_SMD:LED_0603_1608Metric", 90, 260)
     s.label("GND", D4.pin("1")); s.label("LED2_A", D4.pin("2"))

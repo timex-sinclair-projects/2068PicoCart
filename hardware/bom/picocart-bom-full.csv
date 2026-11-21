@@ -18,7 +18,7 @@
 "33","R8,R9,R12","Resistor_SMD:R_0603_1608Metric","0603WAF330JT5E","C23140","3","JLCPCB"
 "0","R10","Resistor_SMD:R_0603_1608Metric","0603WAF0000T5E","C21189","1","hand (DNP)"
 "1k","R11,R13,R14","Resistor_SMD:R_0603_1608Metric","0603WAF1001T5E","C21190","3","JLCPCB"
-"100","R15","Resistor_SMD:R_0603_1608Metric","0603WAF1000T5E","C22775","1","JLCPCB"
+"3k3","R15","Resistor_SMD:R_0603_1608Metric","0603WAF3301T5E","C22978","1","JLCPCB"
 "MENU","SW1","Button_Switch_SMD:SW_Push_1P1T_XKB_TS-1187A","TS-1187A-C-J-B","C318885","1","JLCPCB"
 "BOOTSEL","SW2","Button_Switch_SMD:SW_Push_1P1T_XKB_TS-1187A","TS-1187A-C-J-B","C318885","1","JLCPCB"
 "SWCLK","TP1","TestPoint:TestPoint_Pad_1.0x1.0mm","","","1","none (board feature)"
