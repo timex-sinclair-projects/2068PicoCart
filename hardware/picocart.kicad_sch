@@ -1,7 +1,7 @@
 (kicad_sch (version 20250114) (generator "gen_project.py") (generator_version "1")
   (uuid "633448ac-c719-448b-bfee-a8b8683e7c92")
   (paper "A4")
-  (title_block (title "2068 PicoCart") (rev "0.1") (company "Timex/Sinclair Online User Group") (comment 1 "Root sheet: see ../PLAN.md and ../SCHEMATIC.md"))
+  (title_block (title "2068 PicoCart") (rev "0.2") (company "Timex/Sinclair Online User Group") (comment 1 "Root sheet: see ../PLAN.md and ../SCHEMATIC.md"))
   (lib_symbols)
   (sheet (at 30 40) (size 60 30) (fields_autoplaced yes) (stroke (width 0.1524) (type solid)) (fill (color 0 0 0 0.0000)) (uuid "a8db1a4d-d46d-498c-8251-0f8d4b00d6fe")
     (property "Sheetname" "Dock Interface" (at 30 39.3 0) (effects (font (size 1.27 1.27)) (justify left bottom)))

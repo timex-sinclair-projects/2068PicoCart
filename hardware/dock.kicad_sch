@@ -1,7 +1,7 @@
 (kicad_sch (version 20250114) (generator "schlib.py") (generator_version "1")
   (uuid "27904dfa-c95c-4700-a74b-ee58ab9d1d11")
   (paper "A3")
-  (title_block (title "2068 PicoCart: Dock Interface") (rev "0.1") (company "Timex/Sinclair Online User Group"))
+  (title_block (title "2068 PicoCart: Dock Interface") (rev "0.2") (company "Timex/Sinclair Online User Group"))
   (lib_symbols
     (symbol "power:+3V3"
     		(power global)

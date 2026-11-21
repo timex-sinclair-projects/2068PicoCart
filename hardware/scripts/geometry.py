@@ -10,6 +10,7 @@ Turning in the plane keeps the sides: EasyEDA TopLayer (even pins, the parts)
 is still F.Cu.
 """
 
+REV = "0.2"               # board revision: title blocks and the underside silkscreen
 U = 0.254
 XR, YB = 678.15, 330.7
 

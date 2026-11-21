@@ -11,6 +11,8 @@ import os
 import re
 import uuid
 
+from geometry import REV
+
 KICAD_SYMS = "/Applications/KiCad/KiCad.app/Contents/SharedSupport/symbols"
 HW = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PROJECT = "picocart"
@@ -242,7 +244,7 @@ class Sheet:
     def write(self):
         out = ['(kicad_sch (version 20250114) (generator "schlib.py") (generator_version "1")',
                f'  (uuid "{self.file_uuid}")', '  (paper "A3")',
-               f'  (title_block (title "{self.title}") (rev "0.1") (company "Timex/Sinclair Online User Group"))',
+               f'  (title_block (title "{self.title}") (rev "{REV}") (company "Timex/Sinclair Online User Group"))',
                '  (lib_symbols']
         for blk in self.symbols.values():
             out.append("    " + blk.replace("\n", "\n    "))

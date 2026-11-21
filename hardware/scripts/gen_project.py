@@ -14,7 +14,7 @@ import os
 import re
 import uuid
 
-from geometry import PIN_NAMES, fingers
+from geometry import PIN_NAMES, REV, fingers
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 HW = os.path.dirname(HERE)
@@ -83,7 +83,7 @@ def root_sch():
             sheet_uuids[m.group(2)] = m.group(1)
     out = ['(kicad_sch (version 20250114) (generator "gen_project.py") (generator_version "1")',
            f'  (uuid "{root_uuid}")', '  (paper "A4")',
-           '  (title_block (title "2068 PicoCart") (rev "0.1") (company "Timex/Sinclair Online User Group") (comment 1 "Root sheet: see ../PLAN.md and ../SCHEMATIC.md"))',
+           '  (title_block (title "2068 PicoCart") (rev "' + REV + '") (company "Timex/Sinclair Online User Group") (comment 1 "Root sheet: see ../PLAN.md and ../SCHEMATIC.md"))',
            '  (lib_symbols)']
     for i, (f, title) in enumerate(SHEETS):
         x, y = 30 + 80 * i, 40

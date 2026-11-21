@@ -7,11 +7,13 @@
     fall back to the middle of their own body; if nothing fits the designator is
     hidden on silk (it stays on F.Fab for the assembly drawing)
   * the buttons are labelled MENU (SW1) and BOOT (SW2), next to each button
+  * the underside carries the name and revision, as low on the body as it fits clear of vias and pads
   * silkscreen graphics that cross or hug the board edge (connector and antenna
     outlines) are removed
 """
 import os, sys
 import pcbnew
+from geometry import REV
 
 HW = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PCB = os.path.join(HW, "picocart.kicad_pcb")
@@ -19,6 +21,7 @@ MM, T = pcbnew.FromMM, pcbnew.ToMM
 SIZE, STROKE, EDGE = 0.8, 0.15, 0.6
 BODY_H = 35.66        # geometry.BODY_H: the tongue below carries no silk
 LABEL = 0.8           # button labels: designator size, so BOOT fits between SW2 and R11
+REV_TEXT = f"2068 PicoCart rev {REV}"   # on the underside, so boards can be told apart (R15 differs)
 LABELS = {"SW2": "BOOT", "SW1": "MENU"}   # BOOT first: R11 under SW2 leaves it the least room
 
 
@@ -137,6 +140,48 @@ def main():
             return tb
         ref.SetVisible(False)
         return None
+
+    # name and revision on the underside: the lowest clear spot on the body (nearest the fingers),
+    # then the one nearest the middle; clear of vias and copper on B.Cu, inside the outline
+    for d in list(b.GetDrawings()):
+        if isinstance(d, pcbnew.PCB_TEXT) and d.GetLayer() == pcbnew.B_SilkS and d.GetText().startswith("2068 PicoCart rev"):
+            b.Remove(d)
+    holes = []
+    for tr in b.GetTracks():
+        if tr.GetClass() == "PCB_VIA":
+            x, y, r = T(tr.GetPosition().x), T(tr.GetPosition().y), T(tr.GetWidth(pcbnew.F_Cu)) / 2 + 0.25
+            holes.append((x - r, y - r, x + r, y + r))
+    for f in fps:
+        for p in f.Pads():
+            if p.GetLayerSet().Contains(pcbnew.B_Cu):
+                holes.append(box(p.GetBoundingBox(), 0.25))
+    outline = pcbnew.SHAPE_POLY_SET()
+    b.GetBoardPolygonOutlines(outline, False)
+    inside = lambda x, y: outline.Contains(pcbnew.VECTOR2I(MM(x), MM(y)))
+    rw, rh = len(REV_TEXT) * 0.87 + 0.4, 1.0 + STROKE + 0.25
+    spots = []
+    for j in range(int((BODY_H - EDGE - rh) / 0.25), int(EDGE / 0.25), -1):
+        cy = j * 0.25 + rh / 2
+        for i in range(int(W / 0.25)):
+            cx = i * 0.25
+            bx = (cx - rw / 2, cy - rh / 2, cx + rw / 2, cy + rh / 2)
+            if bx[3] > BODY_H - EDGE or not all(inside(x, y) for x in (bx[0] - EDGE, bx[2] + EDGE) for y in (bx[1] - EDGE, bx[3] + EDGE)):
+                continue
+            if any(hit(bx, h) for h in holes):
+                continue
+            spots.append((-cy, abs(cx - W / 2), cx, cy))
+        if spots:
+            break
+    if not spots:
+        sys.exit("no room for the revision label on the underside")
+    _, _, cx, cy = min(spots)
+    txt = pcbnew.PCB_TEXT(b)
+    txt.SetText(REV_TEXT); txt.SetLayer(pcbnew.B_SilkS); txt.SetMirrored(True)
+    txt.SetTextSize(pcbnew.VECTOR2I(MM(1.0), MM(1.0))); txt.SetTextThickness(MM(STROKE))
+    txt.SetHorizJustify(pcbnew.GR_TEXT_H_ALIGN_CENTER); txt.SetVertJustify(pcbnew.GR_TEXT_V_ALIGN_CENTER)
+    txt.SetPosition(pcbnew.VECTOR2I(MM(cx), MM(cy)))
+    b.Add(txt)
+    print(f"label {REV_TEXT!r} on the underside at {cx:.2f}, {cy:.2f}")
 
     byname = {f.GetReference(): f for f in fps}
     # big parts first: their designators have the fewest good spots relative to their size
