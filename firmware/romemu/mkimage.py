@@ -4,8 +4,9 @@
   mkimage.py out.h IMAGE.dck
   mkimage.py out.h IMAGE.bin[@ADDR] [MORE.bin@ADDR ...]     (ADDR hex or decimal; default 0x8000)
 
-A .dck file: 9-byte header [bank][chunk0..chunk7] (0 = absent, 1 = RAM, 2 = ROM), then
-the data of every present chunk, 8 KB each, in chunk order. Only bank 0 (DOCK) is used.
+A .dck file: 9-byte header [bank][chunk0..chunk7], then 8 KB of data for each chunk whose
+type has bit 1 set, in chunk order. Type bit 0 = RAM: 0 absent, 1 empty RAM, 2 ROM, 3 RAM
+with initial contents. Only bank 0 (DOCK) is used.
 A .bin file is a raw ROS image (AROS: header at $8000). Unused bytes are 0xFF, what an
 empty dock reads. Also writes a chunk mask: bit n = chunk n holds cartridge data.
 """
@@ -28,12 +29,10 @@ def main():
                 sys.exit(f"{path}: bank {bank} is not the DOCK bank")
             pos = 0
             for n, t in enumerate(types):
-                if t == 0:
-                    continue
-                if t == 1:
+                if t & 1:
                     ram |= 1 << n
-                    if pos + 8192 > len(body):        # RAM chunks may carry initial contents or none
-                        continue
+                if not t & 2:
+                    continue
                 img[n * 8192:(n + 1) * 8192] = body[pos:pos + 8192]
                 pos += 8192
                 mask |= 1 << n

@@ -16,10 +16,18 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/rom_image.h
     DEPENDS ${CMAKE_CURRENT_LIST_DIR}/mkimage.py VERBATIM)
 add_custom_target(rom_image DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/rom_image.h)
 
-add_executable(romemu main.c)
+# FatFs (read side of the cart drive) as bundled with TinyUSB
+set(FATFS_DIR ${PICO_SDK_PATH}/lib/tinyusb/lib/fatfs/source)
+
+add_executable(romemu main.c flashdisk.c loader.c usb_descriptors.c ${FATFS_DIR}/ff.c ${FATFS_DIR}/ffunicode.c)
 add_dependencies(romemu rom_image)
-target_include_directories(romemu PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
-target_link_libraries(romemu pico_stdlib pico_multicore hardware_adc)
+target_include_directories(romemu PRIVATE ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_BINARY_DIR} ${FATFS_DIR})
+target_compile_definitions(romemu PRIVATE
+    PICO_STDIO_USB_ENABLE_RESET_VIA_VENDOR_INTERFACE=1
+    PICO_STDIO_USB_RESET_INTERFACE_SUPPORT_MS_OS_20_DESCRIPTOR=0
+    PICO_STDIO_USB_ENABLE_RESET_VIA_BAUD_RATE=1)
+target_link_libraries(romemu pico_stdlib pico_multicore pico_unique_id hardware_adc hardware_flash
+    tinyusb_device tinyusb_board)
 pico_enable_stdio_usb(romemu 1)
 pico_enable_stdio_uart(romemu 0)
 pico_add_extra_outputs(romemu)
