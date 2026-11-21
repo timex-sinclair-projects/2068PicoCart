@@ -49,7 +49,7 @@ enum {
 #define DOCK_ON_V 4.4f
 #define DOCK_OFF_V 4.0f
 #define LED2_WRAP 999                                 // white LED PWM: 150 kHz at 150 MHz
-#define LED2_ON 30                                    // 3% duty: D4 is far brighter than the red LED
+#define LED2_ON (LED2_PERCENT * (LED2_WRAP + 1) / 100)  // LED2_PERCENT from CMake: 3 for R15 = 100 R, 100 for 3k3
 #define RESCAN_IDLE_MS 1500                           // quiet time after host writes before a rescan
 
 // the menu's directory table (see menu/menu.asm)

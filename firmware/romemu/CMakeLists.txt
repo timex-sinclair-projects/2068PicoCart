@@ -37,10 +37,14 @@ set(FATFS_DIR ${PICO_SDK_PATH}/lib/tinyusb/lib/fatfs/source)
 add_executable(romemu main.c config.c flashdisk.c loader.c usb_descriptors.c ${FATFS_DIR}/ff.c ${FATFS_DIR}/ffunicode.c)
 add_dependencies(romemu rom_image menu_image)
 target_include_directories(romemu PRIVATE ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_BINARY_DIR} ${FATFS_DIR})
+# White LED (D4) brightness. Rev 0.1 boards have R15 = 100 R, far too bright: dim to 3%.
+# Boards with R15 = 3k3 (the current design) want 100: -DLED2_PERCENT=100
+set(LED2_PERCENT 3 CACHE STRING "white LED PWM duty, percent")
 target_compile_definitions(romemu PRIVATE
     PICO_STDIO_USB_ENABLE_RESET_VIA_VENDOR_INTERFACE=1
     PICO_STDIO_USB_RESET_INTERFACE_SUPPORT_MS_OS_20_DESCRIPTOR=0
-    PICO_STDIO_USB_ENABLE_RESET_VIA_BAUD_RATE=1)
+    PICO_STDIO_USB_ENABLE_RESET_VIA_BAUD_RATE=1
+    LED2_PERCENT=${LED2_PERCENT})
 target_link_libraries(romemu pico_stdlib pico_multicore pico_unique_id hardware_adc hardware_flash hardware_pwm
     tinyusb_device tinyusb_board)
 pico_enable_stdio_usb(romemu 1)
