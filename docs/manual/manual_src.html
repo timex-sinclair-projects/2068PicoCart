@@ -1,0 +1,308 @@
+<title>2068 PicoCart Manual</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<style>
+:root{
+  --paper:#f2f3ee; --panel:#e6e8e0; --ink:#1c1f1b; --muted:#565c53; --rule:#c9ccc2;
+  --sea:#1d3fb8; --land:#1f8a2e; --yel:#b88a00; --red:#b3261e; --accent:#1d3fb8;
+  --code-bg:#e3e6dc; --key-bg:#fbfbf8;
+  --shot-bg:#000;
+  --display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --body:"Source Serif 4",Georgia,"Times New Roman",serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --paper:#15171a; --panel:#1f2226; --ink:#e7e8e3; --muted:#a3a89f; --rule:#34383d;
+    --sea:#7f9bff; --land:#5ccb6a; --yel:#e3b92c; --red:#ff7a70; --accent:#8aa4ff;
+    --code-bg:#23272c; --key-bg:#2a2e33;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --paper:#15171a; --panel:#1f2226; --ink:#e7e8e3; --muted:#a3a89f; --rule:#34383d;
+  --sea:#7f9bff; --land:#5ccb6a; --yel:#e3b92c; --red:#ff7a70; --accent:#8aa4ff;
+  --code-bg:#23272c; --key-bg:#2a2e33;
+}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6;padding-inline:20px;padding-block:0 64px}
+.wrap{max-width:1060px;margin:0 auto}
+header.cover{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:40px;align-items:center;padding-block:48px 40px;border-bottom:3px solid var(--ink)}
+.eyebrow{font-family:var(--mono);font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(56px,9vw,104px);line-height:.9;letter-spacing:.01em;margin:.25em 0 .2em;text-transform:uppercase}
+.lede{font-size:19px;max-width:34em;margin:0}
+.meta{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:18px;font-family:var(--mono);font-size:13px;color:var(--muted)}
+.site{margin:14px 0 0;font-family:var(--mono);font-size:12px;letter-spacing:.1em}
+.site a{color:var(--muted);text-decoration:none;border-bottom:1px solid currentColor}
+.site a:hover{color:var(--ink)}
+.shot{background:var(--shot-bg);border:1px solid var(--rule);padding:10px;margin:0}
+.shot img{display:block;width:100%;height:auto;image-rendering:pixelated;image-rendering:crisp-edges}
+.shot figcaption,figure figcaption{font-family:var(--mono);font-size:12.5px;color:var(--muted);margin-top:8px;line-height:1.45}
+.shot figcaption{color:#b9bdb3}
+/* Okimate printout ({{okimate:name}}): a sheet of paper at its real printed size */
+.printout{margin:0}
+.printout img.okimate,img.okimate{display:block;max-width:100%;height:auto;margin:0 auto;image-rendering:auto;box-shadow:0 1px 2px rgba(0,0,0,.18),0 6px 18px rgba(0,0,0,.14)}
+.printout figcaption{text-align:center;margin-top:12px}
+nav.toc{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:4px 24px;padding-block:22px;border-bottom:1px solid var(--rule);font-family:var(--display);font-size:19px;font-weight:600}
+nav.toc a{color:var(--ink);text-decoration:none;display:flex;gap:10px}
+nav.toc a span{font-family:var(--mono);font-weight:400;font-size:13px;color:var(--muted);padding-top:4px;min-width:1.6em}
+nav.toc a:hover{color:var(--accent)}
+section{padding-block:34px 8px;border-bottom:1px solid var(--rule)}
+h2{font-family:var(--display);font-weight:700;font-size:40px;line-height:1;text-transform:uppercase;letter-spacing:.01em;margin:0 0 16px;display:flex;gap:14px;align-items:baseline;text-wrap:balance}
+h2 .n{font-family:var(--mono);font-size:15px;font-weight:500;color:var(--accent);letter-spacing:0}
+h3{font-family:var(--display);font-weight:600;font-size:24px;margin:28px 0 8px;text-transform:uppercase;letter-spacing:.02em;text-wrap:balance}
+p,li{max-width:42em}
+p{margin:0 0 14px}
+ul,ol{padding-left:1.3em;margin:0 0 14px}
+li{margin-bottom:5px}
+a{color:var(--accent)}
+a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+code,.mono{font-family:var(--mono);font-size:.86em}
+code{background:var(--code-bg);padding:1px 5px;border-radius:3px}
+kbd{font-family:var(--mono);font-size:.82em;background:var(--key-bg);border:1px solid var(--rule);border-bottom-width:3px;border-radius:4px;padding:0 6px;white-space:nowrap;color:var(--ink)}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:32px;align-items:start}
+.two.wide-left{grid-template-columns:minmax(0,1.25fr) minmax(0,1fr)}
+.tbl{overflow-x:auto;margin:6px 0 18px;border-top:2px solid var(--ink)}
+table{border-collapse:collapse;width:100%;font-size:15.5px}
+th,td{text-align:left;padding:7px 12px 7px 0;border-bottom:1px solid var(--rule);vertical-align:top}
+th{font-family:var(--mono);font-size:12px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--mono);font-size:14px}
+td.k{white-space:nowrap}
+.note{background:var(--panel);padding:14px 18px;margin:8px 0 18px;max-width:46em;border-radius:2px}
+.note b:first-child{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;display:block;margin-bottom:4px;color:var(--muted);font-weight:500}
+.compass{display:grid;grid-template-columns:repeat(3,52px);grid-template-rows:repeat(3,52px);gap:4px;margin:6px 0 10px}
+.compass div{display:grid;place-items:center;font-family:var(--mono);font-size:20px;font-weight:500;background:var(--key-bg);border:1px solid var(--rule);border-bottom-width:3px;border-radius:5px}
+.compass .c{background:transparent;border:none;font-size:12px;color:var(--muted)}
+.compass-row{display:flex;flex-wrap:wrap;gap:28px;align-items:center}
+.compass-row p{margin:0}
+.icon{width:32px;height:32px;display:block;border:1px solid var(--rule)}
+.legend{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:10px 22px;margin:10px 0 18px}
+.legend div{display:flex;gap:10px;align-items:center;font-size:15px;line-height:1.3}
+.legend small{display:block;color:var(--muted);font-size:13px}
+.unitname{display:flex;gap:10px;align-items:center;font-weight:600}
+figure{margin:0}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:22px;margin:10px 0 18px}
+footer{padding-block:28px;font-size:14px;color:var(--muted)}
+@media (max-width:760px){
+  header.cover,.two,.two.wide-left{grid-template-columns:minmax(0,1fr);gap:24px}
+  h2{font-size:32px}
+  body{font-size:16px}
+}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+
+/* optional: painted cover art in the header (use <figure class="art">{{img:cover_art}}</figure>) */
+.art{margin:0;border:1px solid var(--rule);background:#000}
+.art img{display:block;width:100%;height:auto;image-rendering:auto}
+/* optional: collapsible spoilers (<details class="spoiler"><summary>...</summary>...</details>) */
+details.spoiler{border:1px solid var(--rule);border-left:4px solid var(--red);padding:10px 16px;margin:10px 0 18px;max-width:46em;background:var(--panel)}
+details.spoiler summary{cursor:pointer;font-family:var(--display);font-weight:600;font-size:20px;text-transform:uppercase;letter-spacing:.02em}
+details.spoiler[open] summary{margin-bottom:10px}
+</style>
+
+<div class="wrap">
+<header class="cover">
+  <div>
+    <div class="eyebrow">Timex/Sinclair 2068 · Dock cartridge · Rev 0.1 and 0.2</div>
+    <h1>2068 PicoCart</h1>
+    <p class="lede">A cartridge for the 2068's dock slot that holds as many carts as you put on it. Copy cartridge files onto it from your computer like a thumb drive, then choose one from a menu on the 2068's screen.</p>
+    <div class="meta"><span>.dck · .bin · .rom</span><span>ROM and RAM carts</span><span>USB-C</span><span>runs on the 2068's power</span></div>
+    <p class="site"><a href="https://timexsinclair.com">timexsinclair.com</a></p>
+  </div>
+  <figure class="shot">{{img:menu}}<figcaption>The cart menu: hold MENU while you switch the 2068 on.</figcaption></figure>
+</header>
+
+<nav class="toc" aria-label="Contents">
+  <a href="#cart"><span>1</span>The cartridge</a>
+  <a href="#usb"><span>2</span>Loading carts over USB</a>
+  <a href="#menu"><span>3</span>The cart menu</a>
+  <a href="#menubutton"><span>4</span>MENU while a cart runs</a>
+  <a href="#lights"><span>5</span>The lights</a>
+  <a href="#nousb"><span>6</span>Without USB</a>
+  <a href="#files"><span>7</span>Cartridge files</a>
+  <a href="#trouble"><span>8</span>Troubleshooting</a>
+  <a href="#firmware"><span>9</span>Updating the firmware</a>
+  <a href="#reference"><span>10</span>Reference</a>
+  <a href="#about"><span>11</span>About this manual</a>
+</nav>
+
+<section id="cart">
+  <h2><span class="n">01</span>The cartridge</h2>
+  <div class="two wide-left">
+  <div>
+  <p>The PicoCart goes in the 2068's dock slot, under the flap at the front, like any Timex cartridge. Inside it is a Raspberry Pi RP2354B microcontroller with 2 MB of flash. It stores your carts on a small drive, and when the 2068 reads the dock it answers with the cart you chose, as fast as a real ROM would.</p>
+  <p>It holds one 64 KB dock image at a time: all eight 8 KB chunks of the dock bank. Each chunk can be ROM or RAM, as the cart file says, so the PicoCart runs ROM carts at $0000 (LROS) and at $8000 (AROS), and carts that need RAM in the dock.</p>
+  <h3>Buttons, lights and the socket</h3>
+  <div class="tbl"><table>
+    <tr><th></th><th>Part</th><th>What it does</th></tr>
+    <tr><td class="num">1</td><td><b>MENU</b> (SW1)</td><td>Brings up the cart menu. The button farther from the USB socket.</td></tr>
+    <tr><td class="num">2</td><td><b>BOOT</b> (SW2)</td><td>Only for firmware updates. You never need it otherwise.</td></tr>
+    <tr><td class="num">3</td><td>Red light (D3)</td><td>On while the cart is on the 2068's bus.</td></tr>
+    <tr><td class="num">4</td><td>White light (D4)</td><td>Flickers while the 2068 reads the cart.</td></tr>
+    <tr><td class="num">5</td><td>USB-C socket (J2)</td><td>To your computer, for copying carts on. Optional in the 2068.</td></tr>
+  </table></div>
+  <p>Rev 0.2 boards have MENU and BOOT printed beside the buttons, and "rev 0.2" on the underside. Rev 0.1 boards say SW1 and SW2.</p>
+  </div>
+  <figure class="art">{{img:board_top}}<figcaption>The top of the board, with the gold fingers that go into the dock at the bottom. The numbers match the table.</figcaption></figure>
+  </div>
+  <div class="note"><b>Power off first</b>Switch the 2068 off before you put the PicoCart in or take it out, as with any cartridge. Push it fully home: a contact that doesn't touch shows up as garbled text and carts that crash (see <a href="#trouble">Troubleshooting</a>).</div>
+</section>
+
+<section id="usb">
+  <h2><span class="n">02</span>Loading carts over USB</h2>
+  <p>Plug the PicoCart into your computer with a USB-C data cable. A drive called <code>PICOCART</code> appears, 1.4 MB in size, with a <code>README.TXT</code> on it. The cart can be in the 2068 or on its own; USB powers it either way.</p>
+  <ol>
+    <li>Copy a <code>.dck</code>, <code>.bin</code> or <code>.rom</code> file onto the drive.</li>
+    <li>Eject the drive (or wait a couple of seconds after the copy finishes).</li>
+    <li>Switch the 2068 off and on. The 2068 reads the dock only when it powers up.</li>
+  </ol>
+  <p>The PicoCart serves the file you copied most recently. It remembers that choice in flash, so the same cart comes up every time you switch on, until you copy another file or choose one from the menu.</p>
+  <p>If the 2068 is running when you copy, the cart it is running stays put. Both lights blink together to tell you a new cart is waiting; it starts the next time you switch the 2068 off and on.</p>
+  <div class="note"><b>Reset isn't enough</b>A 2068 reset (or <code>RANDOMIZE USR 0</code>) restarts the same cart. Only switching the 2068 off and on brings in a new one.</div>
+  <h3>What the drive will hold</h3>
+  <ul>
+    <li>Only files in the top folder count. Files inside folders are ignored, and so are hidden files and names that start with a dot (the <code>._</code> files a Mac leaves behind are harmless).</li>
+    <li>Up to 48 carts. Names can be up to 63 characters; longer names are skipped.</li>
+    <li>1.4 MB holds 48 carts of 16 KB, or about 40 of 32 KB. A <code>.dck</code> file is 9 bytes bigger than the ROM it holds.</li>
+  </ul>
+  <p>Deleting carts is fine. If you delete the current cart, the PicoCart uses the newest file left on the drive.</p>
+</section>
+
+<section id="menu">
+  <h2><span class="n">03</span>The cart menu</h2>
+  <div class="two">
+  <div>
+  <p>To switch between carts already on the drive, hold <kbd>MENU</kbd> while you switch the 2068 on, and keep it held until the menu appears. You don't need USB for this.</p>
+  <p>The menu lists every cart on the drive in alphabetical order, with the current cart highlighted. The first entry, <code>(no cartridge: BASIC)</code>, starts the 2068 as if the dock were empty.</p>
+  <div class="tbl"><table>
+    <tr><th>Key</th><th>Does</th></tr>
+    <tr><td class="k"><kbd>Q</kbd> <kbd>7</kbd> <kbd>↑</kbd></td><td>Move up.</td></tr>
+    <tr><td class="k"><kbd>A</kbd> <kbd>6</kbd> <kbd>↓</kbd></td><td>Move down.</td></tr>
+    <tr><td class="k"><kbd>ENTER</kbd> <kbd>0</kbd></td><td>Start the highlighted cart.</td></tr>
+  </table></div>
+  <p>Hold a key to keep moving. The list shows 20 entries and scrolls; names longer than 30 characters are cut short on screen.</p>
+  </div>
+  <figure class="shot">{{img:menu_nocart}}<figcaption>"No cartridge" highlighted. ENTER here starts BASIC with the PicoCart off the bus.</figcaption></figure>
+  </div>
+  <h3>Starting a cart</h3>
+  <div class="two">
+  <figure class="shot">{{img:menu_starting}}<figcaption>After ENTER: about a second later the 2068 restarts into Profile.</figcaption></figure>
+  <div>
+  <p>Press <kbd>ENTER</kbd> and the menu says <code>Starting...</code>. About a second later the 2068 restarts into the cart you chose, just as if you had switched it on with that cart in the dock. There's no power cycle.</p>
+  <p>The cart you choose becomes the current cart. It comes up every time you switch on from then on, without the menu.</p>
+  <p>Choosing <code>(no cartridge: BASIC)</code> takes the PicoCart off the bus until you next switch off: the red light goes out and the 2068 behaves as if the dock were empty. Next time you switch on, your current cart is back.</p>
+  <p>If a file can't be loaded, the 2068 comes back to the menu.</p>
+  </div>
+  </div>
+</section>
+
+<section id="menubutton">
+  <h2><span class="n">04</span>MENU while a cart runs</h2>
+  <p>Holding a button while you reach for the power switch is awkward, so you can also press <kbd>MENU</kbd> at any time while a cart runs: nothing happens to the running cart, but both lights start blinking together, and the menu comes up the next time you switch the 2068 on.</p>
+  <p>Changed your mind? Press <kbd>MENU</kbd> again before you switch off. The lights stop blinking and the next power-up starts the current cart as usual.</p>
+  <p>The press is saved in flash at once, so it survives switching off even when the PicoCart has no USB power.</p>
+</section>
+
+<section id="lights">
+  <h2><span class="n">05</span>The lights</h2>
+  <div class="tbl"><table>
+    <tr><th>Red</th><th>White</th><th>Means</th></tr>
+    <tr><td>on</td><td>flickering</td><td>A cart is running and the 2068 is reading it. Normal.</td></tr>
+    <tr><td>on</td><td>off</td><td>On the bus, but the 2068 isn't reading the dock just now (it is running from its own ROM or RAM). Also normal.</td></tr>
+    <tr><td>off</td><td>off</td><td>The 2068 is off, or you chose "no cartridge", or the PicoCart is on USB alone.</td></tr>
+    <tr><td colspan="2">both blinking together</td><td>Something is waiting for the next power-up: a newly copied cart, or the menu after a MENU press. Switch the 2068 off and on.</td></tr>
+  </table></div>
+  <p>On rev 0.1 boards the white light is dimmed by the firmware, because its resistor makes it far brighter than the red one. Rev 0.2 boards use a larger resistor instead (see <a href="#firmware">Updating the firmware</a>).</p>
+</section>
+
+<section id="nousb">
+  <h2><span class="n">06</span>Using it without USB</h2>
+  <p>The PicoCart doesn't need USB in the 2068. It runs on the 2068's own +5 V, and keeps everything in flash: the carts on the drive, the current cart, and a MENU press. So you can fill the drive once at your computer and leave the cable there.</p>
+  <ol>
+    <li>Plug the PicoCart into your computer on its own. The <code>PICOCART</code> drive appears.</li>
+    <li>Copy carts onto it, eject the drive and unplug the cable.</li>
+    <li>Put the PicoCart in the 2068 and switch on. Choose carts with the menu.</li>
+  </ol>
+  <p>From the 2068's power alone, the PicoCart is ready almost two seconds before the 2068 first looks at the dock. You can plug USB in while the 2068 is running (to copy a cart or watch the status messages) and unplug it again; the cart keeps running.</p>
+</section>
+
+<section id="files">
+  <h2><span class="n">07</span>Cartridge files</h2>
+  <div class="tbl"><table>
+    <tr><th>Type</th><th>What it is</th><th>Where it goes</th></tr>
+    <tr><td class="k"><code>.dck</code></td><td>The dock format used by Warajevo, EightyOne, ZEsarUX and most cart archives. Each 8 KB chunk is marked ROM, RAM or empty.</td><td>Where the file says. RAM chunks, with or without contents, become RAM. Only the dock bank is used; EXROM and HOME sections are skipped.</td></tr>
+    <tr><td class="k"><code>.bin</code> <code>.rom</code></td><td>A raw ROM image: the bytes and nothing else.</td><td>$8000 (AROS) if it is 32 KB or smaller, else $0000. Put an address in the name to choose: <code>GAME@0000.BIN</code>.</td></tr>
+  </table></div>
+  <div class="note"><b>LROS carts as .bin</b>A 16 KB LROS cart (one that replaces the HOME ROM, such as a game that starts without BASIC) must load at $0000. Name it with <code>@0000</code>, for example <code>RAIDERS@0000.BIN</code>; without it, it lands at $8000 and the 2068 won't find it. A <code>.dck</code> file needs no help.</div>
+  <p>The address after <code>@</code> is in hex, with or without a <code>$</code>. The image must fit below $FFFF. Any part of the 64 KB the file doesn't fill reads as $FF, as an empty dock would. Files with other extensions are ignored, so you can keep notes or instructions on the drive alongside the carts.</p>
+  <h3>How the 2068 finds a cart</h3>
+  <p>At power-up the 2068's ROM looks in the dock for a cart header: at $0000 for an LROS cart, then at $8000 for an AROS cart. If it finds neither, it starts BASIC. The PicoCart answers both places from the image you chose, so carts start exactly as they do from a real cartridge.</p>
+</section>
+
+<section id="trouble">
+  <h2><span class="n">08</span>Troubleshooting</h2>
+  <div class="tbl"><table>
+    <tr><th>Problem</th><th>Try this</th></tr>
+    <tr><td>The menu's names are garbled, or a cart that used to work crashes or shows rubbish.</td><td>A dock contact isn't touching. Switch off, take the PicoCart out, clean the gold fingers if they're dirty, and push it fully home. A single open address line produces exactly this.</td></tr>
+    <tr><td>The 2068 starts in BASIC as if the dock were empty.</td><td>Is the red light on? If not, you may have chosen "no cartridge": switch off and on. Check that the file is a cart (section 7); a 16 KB LROS <code>.bin</code> needs <code>@0000</code> in its name.</td></tr>
+    <tr><td>A new cart doesn't start.</td><td>Eject the drive, wait for both lights to blink, then switch the 2068 off and on. Reset alone doesn't change carts.</td></tr>
+    <tr><td>The menu doesn't come up.</td><td>Hold <kbd>MENU</kbd> (not BOOT) before you switch on, and keep holding until the menu appears. Or press MENU once while a cart runs, check both lights blink, and switch off and on.</td></tr>
+    <tr><td>A cart is missing from the menu.</td><td>It must be in the top folder, end in <code>.dck</code>, <code>.bin</code> or <code>.rom</code>, have a name under 64 characters, and be among the first 48 carts.</td></tr>
+    <tr><td>The menu comes back after ENTER.</td><td>The file couldn't be loaded: it may be damaged, or a <code>.dck</code> with no ROM or RAM data in the dock bank.</td></tr>
+    <tr><td>No <code>PICOCART</code> drive on the computer.</td><td>Try another cable: many USB-C cables carry power only. If a drive called <code>RP2350</code> appears instead, BOOT was held as you plugged in; unplug and plug in again.</td></tr>
+    <tr><td>The drive is corrupted or won't mount.</td><td>Reformat it from your computer as FAT (MS-DOS FAT), then copy your carts back.</td></tr>
+  </table></div>
+  <h3>Status messages</h3>
+  <p>Over USB the PicoCart is also a serial port. Open it in any terminal program (the speed doesn't matter) to see what it is doing, for example <code>2068 on: serving Profile.dck</code>, <code>new cart waiting: switch the 2068 off and on</code>, or <code>drive: GAME.BIN is not a cart image I can use</code>. Once a second it prints a status line with the dock voltage and how many times the 2068 has read the cart.</p>
+</section>
+
+<section id="firmware">
+  <h2><span class="n">09</span>Updating the firmware</h2>
+  <p>The firmware is the program the PicoCart's microcontroller runs. It comes as a file called <code>romemu.uf2</code>, built from the <code>firmware/romemu</code> folder of the project. Updating it doesn't touch the drive: your carts, the current cart and the settings stay.</p>
+  <p>Take the PicoCart out of the 2068 first.</p>
+  <h3>With the BOOT button</h3>
+  <ol>
+    <li>Hold <kbd>BOOT</kbd> and plug the PicoCart into your computer. Let go.</li>
+    <li>A drive called <code>RP2350</code> appears (instead of <code>PICOCART</code>).</li>
+    <li>Copy <code>romemu.uf2</code> onto it. The PicoCart restarts with the new firmware, and <code>PICOCART</code> comes back.</li>
+  </ol>
+  <h3>With picotool</h3>
+  <p>If you have Raspberry Pi's <code>picotool</code>, you don't need the button. With the PicoCart plugged in and running:</p>
+  <p><code>picotool load -f -x romemu.uf2</code></p>
+  <p>The <code>-f</code> asks the running firmware to restart into the bootloader, and <code>-x</code> starts the new firmware when it's loaded.</p>
+  <div class="note"><b>Rev 0.2 boards</b>The firmware dims the white light to 3% by default, to suit rev 0.1 boards. Rev 0.2 boards have a 3.3 kΩ resistor instead and want full brightness: build their firmware with <code>-DLED2_PERCENT=100</code>. On a rev 0.2 board with rev 0.1 firmware, the white light is just very dim.</div>
+</section>
+
+<section id="reference">
+  <h2><span class="n">10</span>Reference</h2>
+  <div class="tbl"><table>
+    <tr><th>Item</th><th>Value</th></tr>
+    <tr><td>Microcontroller</td><td>Raspberry Pi RP2354B (RP2350, 2 MB flash in the package)</td></tr>
+    <tr><td>Dock image</td><td>64 KB: eight 8 KB chunks, each ROM, RAM or empty ($FF)</td></tr>
+    <tr><td>Drive</td><td><code>PICOCART</code>, FAT12, 1.4 MB; up to 48 carts in the top folder</td></tr>
+    <tr><td>Menu</td><td>Up to 48 carts plus "no cartridge"; 20 rows on screen</td></tr>
+    <tr><td>Speed</td><td>650,000–830,000 dock reads a second measured in a 2068; every cart tested runs at full speed</td></tr>
+    <tr><td>Power</td><td>The 2068's dock +5 V or USB-C, whichever is present; USB can't feed the 2068</td></tr>
+    <tr><td>Start-up</td><td>Ready on the bus about 1.8 s before the 2068's first dock read</td></tr>
+    <tr><td>Bus safety</td><td>A 74LVC245 buffer drives the data lines only on dock reads, and stays off until the 2068's +5 V is steady</td></tr>
+  </table></div>
+  <h3>Flash layout</h3>
+  <div class="tbl"><table>
+    <tr><th>Offset</th><th>Holds</th></tr>
+    <tr><td class="k"><code>$000000</code></td><td>Firmware, up to 512 KB</td></tr>
+    <tr><td class="k"><code>$080000</code></td><td>The <code>PICOCART</code> drive, 1.4 MB</td></tr>
+    <tr><td class="k"><code>$1FE000</code></td><td>Settings: the current cart, and whether the menu comes up next time</td></tr>
+  </table></div>
+  <p>Using the PicoCart with other hardware on the 2068's bus, such as a TS-Pico on the rear expansion port? <code>BUS.md</code> in the project sets out exactly when the cart drives the bus, and what it never does.</p>
+</section>
+
+<section id="about">
+  <h2><span class="n">11</span>About this manual</h2>
+  <p>The 2068 PicoCart is an open hardware project: the board is licensed under CERN-OHL-P-2.0 and the firmware under the MIT licence. The KiCad design, firmware, fab files for JLCPCB and the design notes are at <a href="https://github.com/timex-sinclair-projects/2068PicoCart">github.com/timex-sinclair-projects/2068PicoCart</a>.</p>
+  <p>This manual covers rev 0.1 and rev 0.2 boards with the November 2026 firmware. It was written from the firmware source and from testing on a rev 0.1 board in a 2068: every feature described here was tried on the hardware. The menu screens are from the menu program running in ZEsarUX, with the same carts as the test board: 73000 Flight Simulator, Profile 2068, Space Raiders, a Hello-world test cart and a RAM test.</p>
+  <figure class="art" style="max-width:520px">{{img:board_bottom}}<figcaption>The underside. Rev 0.2 boards carry "2068 PicoCart rev 0.2" here.</figcaption></figure>
+</section>
+
+<footer>2068 PicoCart user's manual, November 2026. <a href="https://timexsinclair.com">timexsinclair.com</a></footer>
+</div>

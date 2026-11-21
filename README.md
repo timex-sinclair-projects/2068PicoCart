@@ -91,6 +91,9 @@ On first boot the firmware formats the drive and puts a `README.TXT` on it. If t
 
 ## Using it
 
+The full user's manual is in [`docs/manual`](docs/manual): [read it on screen](docs/manual/2068%20PicoCart%20Manual.html), or print the [half-letter PDF](docs/manual/2068%20PicoCart%20Manual%20(half-letter).pdf) or the [duplex booklet](docs/manual/2068%20PicoCart%20Manual%20(booklet,%20print%20duplex).pdf). For a booklet with a card cover, print the [card-cover booklet](docs/manual/2068%20PicoCart%20Manual%20(booklet%20with%20card%20cover,%20print%20duplex).pdf): its first sheet is the cover, with blank inside covers, so you can print that sheet on card.
+
+
 1. Plug the cart into your computer. The `PICOCART` drive appears.
 2. Copy a `.dck`, `.bin` or `.rom` file onto it, then eject the drive.
 3. Switch the 2068 off and on. The 2068 reads the dock only at power-up.
