@@ -109,10 +109,9 @@ From the 2068's power alone, the cart's firmware is running 0.1 ms after power r
 
 ## Status
 
-Rev 0.1 boards have been built and brought up. These carts run from the cart's ROM: AROS BASIC carts (Hello world, and Profile 2068's 16K at $8000–$BFFF), 32K machine-code carts (73000 Flight Simulator), and LROS carts that replace the HOME ROM (Space Raiders, 16K at $0000–$3FFF). RAM in the dock bank works: [`firmware/tests/ramtest.py`](firmware/tests/ramtest.py) builds a test cart that writes and checks two patterns across 8 KB of cart RAM at $C000. It passes, and the cart counted exactly 16,384 dock writes. Loading from the USB drive works. The cart runs on the 2068's power alone, with no USB, including a MENU press carried over a power cycle. The on-screen cart menu works on the 2068: choosing a cart restarts the 2068 into it, and the "no cartridge" entry starts BASIC with the cart off the bus.
+Rev 0.1 boards have been built and brought up. These carts run from the cart's ROM: AROS BASIC carts (Hello world, and Profile 2068's 16K at $8000–$BFFF), 32K machine-code carts (73000 Flight Simulator), and LROS carts that replace the HOME ROM (Space Raiders, 16K at $0000–$3FFF). RAM in the dock bank works: [`firmware/tests/ramtest.py`](firmware/tests/ramtest.py) builds a test cart that writes and checks two patterns across 8 KB of cart RAM at $C000. It passes, and the cart counted exactly 16,384 dock writes. Loading from the USB drive works. The cart runs on the 2068's power alone, with no USB. The on-screen cart menu works on the 2068: choosing a cart restarts the 2068 into it, and the "no cartridge" entry starts BASIC with the cart off the bus. Pressing MENU while a cart runs brings up the menu at the next power-up, with or without USB power in between, and a second press cancels it.
 
 Not tested yet:
-- pressing MENU while a cart runs, to bring up the menu at the next power-up
 - the OLED
 
 ## License
