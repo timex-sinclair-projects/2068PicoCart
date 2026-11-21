@@ -9,6 +9,7 @@ A dock cartridge for the Timex Sinclair 2068, built around a Raspberry Pi RP2354
 ## Features
 
 - **Thumb-drive loading.** Over USB the cart appears as a 1.4 MB drive called `PICOCART`. Copy a cart onto it, then switch the 2068 off and on. The cart serves the file you copied most recently and remembers it across power cycles.
+- **A cartridge icon on the Mac.** In the Finder the `PICOCART` drive shows a cartridge icon ([`firmware/romemu/icon`](firmware/romemu/icon)). The firmware adds the two hidden files that make it, `.VolumeIcon.icns` and `._.`, whenever they're missing.
 - **AROS and LROS images.** Supports `.dck` files (the EightyOne/Warajevo dock format, including RAM chunks) and raw `.bin`/`.rom` images. A raw image loads at $8000 unless its name gives an address, for example `GAME@0000.BIN`.
 - **Full-speed bus emulation.** One RP2350 core does nothing but serve the bus. It runs from SRAM with interrupts off and handles about 650,000 dock reads per second in the 2068.
 - **On-screen cart menu.** Hold **MENU** while switching the 2068 on, and it shows a list of the carts on the drive. Pick one with the cursor keys (or Q/A) and ENTER, and the 2068 restarts into that cart, with no power cycle. Pressing MENU while the 2068 runs brings the menu up at the next power-up instead, even with no USB power in between. The first entry starts the 2068 in BASIC with the cart off the bus.

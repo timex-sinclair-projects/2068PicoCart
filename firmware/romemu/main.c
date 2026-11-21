@@ -33,6 +33,7 @@
 #include "tusb.h"
 #include "config.h"
 #include "flashdisk.h"
+#include "icon.h"
 #include "loader.h"
 #include "menu_image.h"
 #include "rom_image.h"
@@ -211,6 +212,7 @@ int main(void) {
     // the cart on the drive, else the built-in image; served once the 2068 is on
     uint32_t t0 = time_us_32();
     flashdisk_init();
+    icon_install();                                   // the drive's Mac Finder icon
     config_init();
     if (!loader_scan(&cart, true)) {
         memcpy(cart.data, rom_image_flash, sizeof cart.data);

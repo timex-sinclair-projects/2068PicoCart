@@ -31,11 +31,24 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/menu_image.h
     DEPENDS ${MENU_BIN} ${CMAKE_CURRENT_LIST_DIR}/bin2h.py VERBATIM)
 add_custom_target(menu_image DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/menu_image.h)
 
+# The drive's Mac Finder icon (icon.c): icon/VolumeIcon.icns and the custom-icon flag file.
+foreach(part icns:volume_icns:VolumeIcon.icns appledouble:appledouble_root:appledouble_root.bin)
+    string(REPLACE ":" ";" part ${part})
+    list(GET part 0 hname)
+    list(GET part 1 cname)
+    list(GET part 2 src)
+    add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/icon_${hname}.h
+        COMMAND python3 ${CMAKE_CURRENT_LIST_DIR}/bin2h.py ${CMAKE_CURRENT_LIST_DIR}/icon/${src} ${cname} ${CMAKE_CURRENT_BINARY_DIR}/icon_${hname}.h
+        DEPENDS ${CMAKE_CURRENT_LIST_DIR}/icon/${src} ${CMAKE_CURRENT_LIST_DIR}/bin2h.py VERBATIM)
+    list(APPEND ICON_HEADERS ${CMAKE_CURRENT_BINARY_DIR}/icon_${hname}.h)
+endforeach()
+add_custom_target(icon_files DEPENDS ${ICON_HEADERS})
+
 # FatFs (read side of the cart drive) as bundled with TinyUSB
 set(FATFS_DIR ${PICO_SDK_PATH}/lib/tinyusb/lib/fatfs/source)
 
-add_executable(romemu main.c config.c flashdisk.c loader.c usb_descriptors.c ${FATFS_DIR}/ff.c ${FATFS_DIR}/ffunicode.c)
-add_dependencies(romemu rom_image menu_image)
+add_executable(romemu main.c config.c flashdisk.c icon.c loader.c usb_descriptors.c ${FATFS_DIR}/ff.c ${FATFS_DIR}/ffunicode.c)
+add_dependencies(romemu rom_image menu_image icon_files)
 target_include_directories(romemu PRIVATE ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_BINARY_DIR} ${FATFS_DIR})
 # White LED (D4) brightness. Rev 0.1 boards have R15 = 100 R, far too bright: dim to 3%.
 # Boards with R15 = 3k3 (the current design) want 100: -DLED2_PERCENT=100

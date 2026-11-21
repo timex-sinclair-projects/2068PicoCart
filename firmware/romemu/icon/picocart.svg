@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <linearGradient id="shell" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3a3d42"/><stop offset="1" stop-color="#1c1e21"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f6d56a"/><stop offset="1" stop-color="#c9971f"/>
+    </linearGradient>
+    <linearGradient id="pcb" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2f6a3a"/><stop offset="1" stop-color="#1d4a27"/>
+    </linearGradient>
+    <filter id="sh" x="-10%" y="-10%" width="120%" height="125%">
+      <feDropShadow dx="0" dy="14" stdDeviation="16" flood-color="#000" flood-opacity=".35"/>
+    </filter>
+  </defs>
+  <!-- board edge with gold fingers, peeking out of the shell -->
+  <g filter="url(#sh)">
+    <rect x="232" y="700" width="560" height="190" rx="18" fill="url(#pcb)"/>
+    <g fill="url(#gold)">
+      <rect x="262" y="760" width="34" height="118" rx="6"/><rect x="314" y="760" width="34" height="118" rx="6"/>
+      <rect x="366" y="760" width="34" height="118" rx="6"/><rect x="418" y="760" width="34" height="118" rx="6"/>
+      <rect x="470" y="760" width="34" height="118" rx="6"/><rect x="522" y="760" width="34" height="118" rx="6"/>
+      <rect x="574" y="760" width="34" height="118" rx="6"/><rect x="626" y="760" width="34" height="118" rx="6"/>
+      <rect x="678" y="760" width="34" height="118" rx="6"/><rect x="730" y="760" width="34" height="118" rx="6"/>
+    </g>
+    <!-- shell -->
+    <rect x="152" y="120" width="720" height="640" rx="56" fill="url(#shell)"/>
+    <rect x="152" y="120" width="720" height="640" rx="56" fill="none" stroke="#000" stroke-opacity=".5" stroke-width="6"/>
+    <!-- grip ridges -->
+    <g fill="#4a4e54"><rect x="232" y="160" width="560" height="14" rx="7"/><rect x="232" y="190" width="560" height="14" rx="7"/><rect x="232" y="220" width="560" height="14" rx="7"/></g>
+    <!-- label -->
+    <rect x="212" y="270" width="600" height="420" rx="22" fill="#0000cd"/>
+    <g>
+      <rect x="212" y="600" width="600" height="18" fill="#cd0000"/>
+      <rect x="212" y="618" width="600" height="18" fill="#cdcd00"/>
+      <rect x="212" y="636" width="600" height="18" fill="#00cd00"/>
+      <rect x="212" y="654" width="600" height="18" fill="#00cdcd"/>
+    </g>
+    <text x="512" y="470" text-anchor="middle" font-family="Barlow Condensed, Arial Narrow, Arial" font-weight="700" font-size="230" fill="#cdcd00">2068</text>
+    <text x="512" y="560" text-anchor="middle" font-family="Barlow Condensed, Arial Narrow, Arial" font-weight="600" font-size="96" letter-spacing="6" fill="#ffffff">PICOCART</text>
+    <!-- lights -->
+    <circle cx="772" cy="166" r="0" fill="none"/>
+  </g>
+</svg>
