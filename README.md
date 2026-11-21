@@ -92,3 +92,7 @@ Not tested yet:
 - LROS images
 - the OLED
 - switching between carts with MENU
+
+## License
+
+The hardware is licensed under [CERN-OHL-P-2.0](hardware/LICENSE) and the firmware under [MIT](firmware/LICENSE). See [LICENSE.md](LICENSE.md) for details.
